@@ -14,7 +14,7 @@ using namespace std::chrono;
 
 int main ()
 {
-    char c;
+    int c;
     uint64_t t0;
     uint64_t t1;
     uint64_t deltaT;
@@ -32,7 +32,6 @@ int main ()
     keypad(stdscr, TRUE);        /* We get F1, F2 etc..         */
     noecho();                            /* Don't echo() while we do getch */
     curs_set(0);           /* Do not display cursor */
-
 
     for ( const auto& w : lvl->get_walls() ) {
 	y = get<1>(w);
@@ -65,23 +64,19 @@ int main ()
 	MOVE_SCALE(y, x);
 	addstr("  ");  /* Prints character, advances a position */
         switch (c) {
-        case 'w':
-        case 'W':
+	case KEY_UP:
 	    y--;
             break;
 
-	case 'a':
-        case 'A':
+	case KEY_LEFT:
 	    x--;
 	    break;
 
-        case 's':
-        case 'S':
+	case KEY_DOWN:
 	    y++;
             break;
 
-        case 'd':
-        case 'D':
+	case KEY_RIGHT:
 	    x++;
 	    break;
 
