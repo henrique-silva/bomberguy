@@ -4,7 +4,6 @@
 #include <vector>
 #include <ncurses.h>
 #include "model.hpp"
-#include <locale.h>
 
 #define SCALE 1
 #define SCALE_X SCALE*2
@@ -28,7 +27,6 @@ int main ()
     /************************* MOVE ALL THIS CODE TO VIEW PART ************************/
     /**********************************************************************************/
 
-    setlocale(LC_ALL, "");
     initscr();                         /* Start curses mode             */
     raw();                                       /* Line buffering disabled     */
     keypad(stdscr, TRUE);        /* We get F1, F2 etc..         */
@@ -42,7 +40,7 @@ int main ()
         MOVE_SCALE(y, x);   /* Move cursor to position */
 	for ( int j = 0; j < SCALE_Y; j++) {
 	    for ( int i = 0; i < SCALE_X; i++) {
-		addwstr(L"\u2588");  /* Prints character, advances a position */
+		addch(' '|A_REVERSE);
 	    }
 	    move((y*SCALE_Y)+j+1, x*SCALE_X);
 	}
@@ -54,7 +52,7 @@ int main ()
     x = 1;
     y = 1;
     MOVE_SCALE(y, x);
-    addwstr(L"<>");  /* Prints character, advances a position */
+    addstr("<>");  /* Prints character, advances a position */
     refresh();      /* Refresh screen */
 
     /**********************************************************************************/
@@ -65,7 +63,7 @@ int main ()
         c = getch();
 
 	MOVE_SCALE(y, x);
-	addwstr(L"  ");  /* Prints character, advances a position */
+	addstr("  ");  /* Prints character, advances a position */
         switch (c) {
         case 'w':
         case 'W':
@@ -94,7 +92,7 @@ int main ()
         }
 
 	MOVE_SCALE(y, x);
-	addwstr(L"<>");  /* Prints character, advances a position */
+	addstr("<>");  /* Prints character, advances a position */
     }
 
     /**********************************************************************************/

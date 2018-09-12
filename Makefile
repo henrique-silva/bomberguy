@@ -1,8 +1,8 @@
 MAIN = bomberguy
 
 SRC = $(wildcard *.cpp)
-GFLAGS = -std=c++11 $(shell ncursesw5-config --cflags)
-LIBS = $(shell ncursesw5-config --libs) -pthread -lportaudio
+GFLAGS = -std=c++11 $(shell ncurses5-config --cflags)
+LIBS = $(shell ncurses5-config --libs) -lncurses -pthread -lportaudio
 
 all: $(MAIN)
 
