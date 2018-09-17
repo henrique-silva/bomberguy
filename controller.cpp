@@ -7,7 +7,7 @@ Controller::Controller(Screen *scr, Level *level, Player *player)
     this->player = player;
 }
 
-void Controller::drop_bomb(Position pos, int remaining_time, int range)
+int Controller::drop_bomb(Position pos, int remaining_time, int range)
 {
     Bomb *bomb;
 
@@ -15,7 +15,7 @@ void Controller::drop_bomb(Position pos, int remaining_time, int range)
 
     if (bomb_cnt <= 0) {
 	/* Not enough bombs stored */
-	return;
+	return 0;
     }
 
     /* Decrement player bomb count */
@@ -30,6 +30,8 @@ void Controller::drop_bomb(Position pos, int remaining_time, int range)
 
     /* Update the map with the bomb on screen */
     this->screen->update();
+
+    return 1;
 }
 
 int Controller::is_colision(Position pos)
@@ -72,6 +74,10 @@ Position Controller::move_player(Position new_pos)
 
     case SYMBOL_EXPLOSION:
 	/* TODO: DIE DIE DIE DIE DIE */
+	break;
+
+    default:
+	/* Invalid symbol - possible error */
 	break;
     }
     /* Update the map on screen */

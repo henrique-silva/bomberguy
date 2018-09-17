@@ -3,7 +3,6 @@
 
 #include "screen.hpp"
 #include "model.hpp"
-#include "graphics.hpp"
 
 class Controller {
 private:
@@ -16,7 +15,7 @@ private:
 public:
     Controller(Screen *scr, Level *lvl, Player *player);
     ~Controller();
-    void drop_bomb(Position pos, int remaining_time, int range);
+    int drop_bomb(Position pos, int remaining_time, int range);
     int is_colision(Position pos);
     Position move_player(Position new_pos);
 };
