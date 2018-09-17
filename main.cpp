@@ -5,10 +5,8 @@
 #include <ncurses.h>
 #include "model.hpp"
 
-#define SCALE 1
-#define SCALE_X SCALE*2
-#define SCALE_Y SCALE
-#define MOVE_SCALE(y, x) move(y*SCALE_Y, x*SCALE_X)
+#include "screen.hpp"
+#include "keyboard.hpp"
 
 using namespace std::chrono;
 
@@ -21,79 +19,41 @@ int main ()
     uint64_t T;
     int x, y;
 
-    Level *lvl = new Level(15, 1, 1);
+    Level *lvl = new Level(15, 5, 1);
 
-    /**********************************************************************************/
-    /************************* MOVE ALL THIS CODE TO VIEW PART ************************/
-    /**********************************************************************************/
 
-    initscr();                         /* Start curses mode             */
-    raw();                                       /* Line buffering disabled     */
-    keypad(stdscr, TRUE);        /* We get F1, F2 etc..         */
-    noecho();                            /* Don't echo() while we do getch */
-    curs_set(0);           /* Do not display cursor */
+    Screen *screen = new Screen(lvl);
 
-    for ( const auto& w : lvl->get_walls() ) {
-	y = get<1>(w);
-	x = get<0>(w);
-        MOVE_SCALE(y, x);   /* Move cursor to position */
-	for ( int j = 0; j < SCALE_Y; j++) {
-	    for ( int i = 0; i < SCALE_X; i++) {
-		addch(' '|A_REVERSE);
-	    }
-	    move((y*SCALE_Y)+j+1, x*SCALE_X);
-	}
-    }
+    Keyboard *keyboard = new Keyboard();
 
-    /**********************************************************************************/
-    /**********************************************************************************/
 
-    x = 1;
-    y = 1;
-    MOVE_SCALE(y, x);
-    addstr("<>");  /* Prints character, advances a position */
-    refresh();      /* Refresh screen */
+    screen->init();
+    screen->update();
 
-    /**********************************************************************************/
-    /***************************** KEYBOARD THREAD/CLASS ******************************/
-    /**********************************************************************************/
-
+    keyboard->init();
+    x = y = 1;
     while (1) {
-        c = getch();
+        Position pos;
+        c = keyboard->getchar();
 
-	MOVE_SCALE(y, x);
-	addstr("  ");  /* Prints character, advances a position */
         switch (c) {
-	case KEY_UP:
-	    y--;
             break;
 
-	case KEY_LEFT:
-	    x--;
-	    break;
 
-	case KEY_DOWN:
-	    y++;
             break;
 
-	case KEY_RIGHT:
-	    x++;
-	    break;
 
-	case 'q':
-	case 'Q':
-	    endwin(); /* End curses mode */
-	    return 0;
+        case 'q':
+        case 'Q':
+            keyboard->stop();
+            screen->stop();
+            return 0;
         }
 
-	MOVE_SCALE(y, x);
-	addstr("<>");  /* Prints character, advances a position */
+        if (c) {
+            screen->update();
+        }
     }
-
-    /**********************************************************************************/
-    /**********************************************************************************/
-
-    return 0;
 }
 
 
