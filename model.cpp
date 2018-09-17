@@ -76,7 +76,14 @@ void Level::set_player(Position pos)
 
 int Level::get_type(Position pos)
 {
-    return this->map[get<0>(pos)][get<1>(pos)];
+    int x = get<0>(pos);
+    int y = get<1>(pos);
+    if ((x >= 0) && (x < this->size) &&
+	(y >= 0) && (y < this->size) ) {
+	return this->map[x][y];
+    } else {
+	return 0;
+    }
 }
 
 Position Level::get_door(void)
