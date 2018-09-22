@@ -23,46 +23,34 @@ Sample::~Sample()
 
 bool Sample::finished()
 {
-    if ( (this->position) >= (this->data.size())) return true;
-    else return false;
+    return ((this->position) >= (this->info.frames));
 }
 
-void Sample::load(const char *filename, float volume)
+void Sample::load(std::string filename)
 {
-    std::string buffer;
-    float fdata;
-    std::ifstream input_file;
-    unsigned int count = 0;
-
-    input_file.open(filename, std::ios_base::in);
-    if (!input_file) {
-#if DEBUG
-        std::cerr << "Arquivo " << filename << " nao encontrado" << std::endl;
-#endif
-        return;
-    }
-
-    while (std::getline(input_file, buffer) ) {
-        std::stringstream(buffer) >> fdata;
-        (this->data).push_back(fdata*volume);
-        count ++;
-    }
+    this->info.format = 0;
+    this->data = sf_open(filename.c_str(), SFM_READ, &this->info);
     this->position = 0;
-#if DEBUG
-    std::cerr << "Total: " << count << " samples" << std::endl;
-#endif
 }
 
-unsigned int Sample::get_position()
+SNDFILE *Sample::get_data()
+{
+    return this->data;
+}
+
+SF_INFO *Sample::get_info()
+{
+    return &this->info;
+}
+unsigned long Sample::get_position()
 {
     return this->position;
 }
 
-void Sample::set_position(unsigned int pos)
+void Sample::set_position(unsigned long pos)
 {
     this->position = pos;
 }
-
 
 Player::Player()
 {
@@ -83,10 +71,6 @@ Sample *Player::get_data() {
     return this->audio_sample;
 }
 
-std::vector<float> Sample::get_data() {
-    return this->data;
-}
-
 void Player::play(Sample *audiosample)
 {
     audiosample->set_position(0);
@@ -101,21 +85,33 @@ int mix_and_play (const void *inputBuffer, void *outputBuffer,
 
 {
     Player *player = (Player*) userData;
-    float *buffer = (float *) outputBuffer;
+    int *buffer = (int *) outputBuffer;
     Sample *s;
+
+    unsigned long framesLeft = framesPerBuffer;
+    unsigned long framesRead;
+
     s = player->get_data();
     if (s != NULL) {
-        std::vector<float> data = s->get_data();
-        unsigned int pos = s->get_position();
+        SNDFILE *data = s->get_data();
+        unsigned long pos = s->get_position();
+	SF_INFO *info = s->get_info();
 
-        // Fill the buffer with samples!
-        for (int i=0; (i<framesPerBuffer); i++, pos++) {
-            if (pos < data.size())
-                buffer[i] = data[pos];
-            else
-                buffer[i] = 0;
+        sf_seek(data, pos*info->channels, SEEK_SET);
+
+
+        if (framesLeft > (info->frames - pos)) {
+            framesRead = (unsigned int) (info->frames - pos);
+	    //playbackEnded = true;
+	    framesLeft = framesRead;
+	    s->set_position(info->frames);
+        } else {
+            framesRead = framesLeft;
+            pos += framesRead;
+	    s->set_position(pos);
         }
-        s->set_position(pos);
+
+        sf_readf_int(data, buffer, framesRead);
     }
     return 0;
 }
@@ -170,8 +166,6 @@ void Player::init()
 #endif
         return;
     }
-
-
 }
 
 void Player::stop()

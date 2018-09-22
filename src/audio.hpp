@@ -1,7 +1,8 @@
 #ifndef AUDIO_HPP
 #define AUDIO_HPP
 
-#include "portaudio.h"
+#include <portaudio.h>
+#include <sndfile.h>
 #include <vector>
 #include <string.h>
 
@@ -9,16 +10,18 @@ namespace Audio {
 
     class Sample {
     private:
-        std::vector<float> data;
-        unsigned int position;
+	SNDFILE * data;
+	SF_INFO info;
+        unsigned long position;
 
     public:
         Sample();
         ~Sample();
-        void load(const char *filename, float volume=1.0);
-        std::vector<float> get_data();
-        unsigned int get_position();
-        void set_position(unsigned int pos);
+        void load(std::string filename);
+        SNDFILE * get_data();
+	SF_INFO *get_info();
+        unsigned long get_position();
+        void set_position(unsigned long pos);
         bool finished();
 
     };

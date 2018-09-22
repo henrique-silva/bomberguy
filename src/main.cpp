@@ -39,28 +39,28 @@ int main ()
     /* TODO: Cleanup these pointers when ending the game */
     /* Load all audio samples */
     Audio::Sample *bg_music = new Audio::Sample();
-    bg_music->load("assets/level.dat", 0.2);
-
     Audio::Sample *door_sample = new Audio::Sample();
-    door_sample->load("assets/sfx/door_discover.dat");
-
     Audio::Sample *bomb_drop_sample = new Audio::Sample();
-    bomb_drop_sample->load("assets/sfx/bomb_drop.dat");
 
-    Audio::Sample *silence_sample = new Audio::Sample();
-    silence_sample->load("assets/silence.dat");
+    bomb_drop_sample->load("assets/sfx/bomb_drop.wav");
+    //bg_music->load("assets/wav/level.wav");
+    //door_sample->load("assets/sfx/door_discover.wav");
+
+
+    //Audio::Sample *silence_sample = new Audio::Sample();
+    //silence_sample->load("assets/silence.dat");
 
     /* Audio initialization */
     Audio::Player *background_player = new Audio::Player();
-    background_player->init();
-    background_player->play(silence_sample);
+    //background_player->init();
+    //background_player->play(silence_sample);
 
     Audio::Player *sfx_player = new Audio::Player();
     sfx_player->init();
-    sfx_player->play(silence_sample);
+    //sfx_player->play(silence_sample);
 
     /* Start background track */
-    background_player->play(bg_music);
+    //background_player->play(bg_music);
 
     while (1) {
         Position pos;
@@ -101,7 +101,7 @@ int main ()
         case 'Q':
             keyboard->stop();
             screen->stop();
-            background_player->stop();
+            //background_player->stop();
             sfx_player->stop();
             return 0;
         }
