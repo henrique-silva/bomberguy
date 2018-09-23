@@ -42,16 +42,6 @@ int Controller::drop_bomb(Position pos, int remaining_time)
     return 1;
 }
 
-int Controller::is_colision(Position pos)
-{
-    Map *map = this->level->get_map();
-
-    int x = std::get<0>(pos);
-    int y = std::get<1>(pos);
-
-    return ((*map)[x][y] != SYMBOL_SPACE);
-}
-
 Position Controller::move_player(Position new_pos)
 {
     Position old_pos = this->player->get_pos();
