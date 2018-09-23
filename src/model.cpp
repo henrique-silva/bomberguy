@@ -1,11 +1,17 @@
 #include "model.hpp"
 
+//#define RANDOM_WALLS
+#define RANDOM_BRICKS
+
 using namespace std;
 
 /*********************** Level Class methods ************************/
 Level::Level(int size, int door_x, int door_y)
 {
     int x, y;
+
+    /* Seed the random functions */
+    srand(time(NULL));
 
     /* Use only odd numbers for map size, if even, round it down */
     this->size = (size % 2) ? size : (size-1);
@@ -14,7 +20,7 @@ Level::Level(int size, int door_x, int door_y)
     this->map.resize(size, std::vector<char>(size,' '));
 
     /* Draw const parts of the map */
-    this->build_walls();
+    this->create_map();
     this->min_x = 0;
     this->min_y = 0;
     this->max_x = size;
@@ -22,9 +28,9 @@ Level::Level(int size, int door_x, int door_y)
     this->set_symbol(make_tuple(door_x, door_y), SYMBOL_DOOR_HIDDEN);
 }
 
-void Level::build_walls( void )
+void Level::create_map( void )
 {
-    int x, y;
+    int x, y, i;
 
     /* Creates a map of the following type:
      *            *******
@@ -51,6 +57,26 @@ void Level::build_walls( void )
             }
         }
     }
+
+#ifdef RANDOM_WALLS
+    /* 10 percent of all blocks will become random walls */
+    for (i = 0; i < (this->size*this->size*0.1); i++) {
+	x = rand() % this->size;
+	y = rand() % this->size;
+	this->map[x][y] = SYMBOL_WALL;
+    }
+#endif
+
+#ifdef RANDOM_BRICKS
+    /* 10 percent of all blocks will become random walls */
+    for (i = 0; i < (this->size*this->size*0.15); i++) {
+	x = (rand() % (this->size-2) + 1);
+	y = (rand() % (this->size-2) + 1);
+	if (this->map[x][y] == SYMBOL_SPACE) {
+	    this->map[x][y] = SYMBOL_BRICK;
+	}
+    }
+#endif
 }
 
 Map *Level::get_map()

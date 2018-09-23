@@ -41,18 +41,32 @@ void Screen::update()
 		addch(' ');
 		attroff(A_REVERSE);
 		break;
+
+	    case SYMBOL_DOOR_HIDDEN:
+		/* Door is hidden behind a brick, so display as the same character */
+	    case SYMBOL_BRICK:
+		move(j,i);
+		attron(A_DIM);
+		addch('#');
+		attroff(A_DIM);
+		break;
+
 	    case SYMBOL_SPACE:
 		mvaddch(j, i, ' ');
 		break;
+
 	    case SYMBOL_PLAYER:
 		mvaddch(j, i, 'A');
 		break;
-	    case SYMBOL_DOOR:
+
+	    case SYMBOL_DOOR_FOUND:
 		mvaddch(j, i, 'D');
 		break;
+
 	    case SYMBOL_BOMB:
 		mvaddch(j, i, 'o');
 		break;
+
 	    case SYMBOL_EXPLOSION:
 		mvaddch(j, i, 'X');
 		break;

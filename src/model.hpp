@@ -4,6 +4,8 @@
 #include <vector>
 #include <algorithm>
 #include <tuple>
+#include <cstdlib>
+#include <ctime>
 
 #define SYMBOL_PLAYER		'P'
 #define SYMBOL_WALL		'W'
@@ -11,7 +13,8 @@
 #define SYMBOL_BOMB		'B'
 #define SYMBOL_ENEMY		'E'
 #define SYMBOL_SPACE		' '
-#define SYMBOL_DOOR		'D'
+#define SYMBOL_DOOR_HIDDEN      'd'
+#define SYMBOL_DOOR_FOUND       'D'
 #define SYMBOL_EXPLOSION	'X'
 
 typedef std::tuple<double, double> Position;
@@ -30,9 +33,14 @@ private:
     Position door_pos;
     std::vector<Position> walls;
     Map map;
-    void build_walls();
+    void create_map();
 
 public:
+    int min_x;
+    int max_x;
+    int min_y;
+    int max_y;
+
     Level(int size, int door_x, int door_y);
     Map *get_map();
     Position get_door();
