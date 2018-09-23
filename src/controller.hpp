@@ -29,6 +29,8 @@ public:
     int drop_bomb(Position pos, int remaining_time, int range);
     void remove_bomb(Bomb *bomb);
     void explode_bomb(Bomb *bomb);
+    Bomb *find_bomb(Position pos);
+
 };
 
 

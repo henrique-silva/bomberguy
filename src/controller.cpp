@@ -118,6 +118,12 @@ void Controller::update(int deltaT)
     }
 }
 
+Bomb *Controller::find_bomb(Position f_pos)
+{
+    return *(std::find_if(this->bomb_list.begin(), this->bomb_list.end(),
+			  [f_pos]( Bomb* const b) -> bool { return (b->get_pos() == f_pos); }));
+}
+
 void Controller::explode_bomb(Bomb *bomb)
 {
     Position pos = bomb->get_pos();
@@ -149,7 +155,10 @@ void Controller::explode_bomb(Bomb *bomb)
                 if (explosion_pos == bomb->get_pos()) {
                     int symb = (bomb->get_status() == BOMB_EXPLODED) ? SYMBOL_SPACE : SYMBOL_EXPLOSION;
                     this->level->set_symbol(explosion_pos, symb);
-                }
+                } else {
+		    /* Force another bomb to explode */
+		    this->explode_bomb(this->find_bomb(explosion_pos));
+		}
                 break;
 
             case SYMBOL_SPACE:
