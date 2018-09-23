@@ -136,6 +136,10 @@ void Controller::explode_bomb(Bomb *bomb)
                 break;
 
             case SYMBOL_WALL:
+		/* Force the loop to go to the next explosion axis */
+		j = bomb->get_range();
+		break;
+
             case SYMBOL_BRICK:
                 /* Destroy brick */
                 break;
