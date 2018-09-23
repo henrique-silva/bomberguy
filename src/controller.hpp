@@ -12,21 +12,23 @@ private:
     Level *level;
     Player *player;
     std::vector<Bomb *> bomb_list;
-    //vector<Enemy*> enemy_list;
+    std::vector<Enemy *> enemy_list;
 
     /* Left, Up, Right, Down */
-    std::vector<int> dir_x {-1, 0, 1, 0};
-    std::vector<int> dir_y {0, 1, 0, -1};
+    const std::vector<int> dir_x {-1, 0, 1, 0};
+    const std::vector<int> dir_y {0, 1, 0, -1};
 
 
 public:
     Controller(Screen *scr, Level *lvl, Player *player);
     ~Controller();
-    int is_colision(Position pos);
     Position move_player(Position new_pos);
-    void update(int deltaT);
 
-    int drop_bomb(Position pos, int remaining_time, int range);
+    void kill_enemy(Position pos);
+    Position move_enemy(Enemy *enemy, Position new_pos_d);
+    void update(double deltaT);
+
+    int drop_bomb(Position pos, int remaining_time);
     void remove_bomb(Bomb *bomb);
     void explode_bomb(Bomb *bomb);
     Bomb *find_bomb(Position pos);

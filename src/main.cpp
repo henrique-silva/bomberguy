@@ -77,7 +77,7 @@ int main ()
         t1 = get_now_ms();
         deltaT = t1-t0;
 
-	control->update(deltaT);
+	control->update((double)deltaT);
         c = keyboard->getchar();
 
         switch (c) {
@@ -106,7 +106,7 @@ int main ()
             break;
 
         case ' ':
-            if (control->drop_bomb(std::make_tuple(x, y), 3000, 3)) {
+            if (control->drop_bomb(std::make_tuple(x, y), 3000)) {
 		//sfx_player->play(bomb_drop_sample);
 	    }
             break;

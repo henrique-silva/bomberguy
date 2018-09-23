@@ -56,6 +56,11 @@ void Screen::update()
 	    case SYMBOL_EXPLOSION:
 		mvaddch(j, i, 'X');
 		break;
+
+	    case SYMBOL_ENEMY:
+		mvaddch(j, i, 'E');
+		break;
+
 	    }
 	}
     }

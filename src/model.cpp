@@ -15,7 +15,11 @@ Level::Level(int size, int door_x, int door_y)
 
     /* Draw const parts of the map */
     this->build_walls();
-    this->set_symbol(make_tuple(door_x, door_y), SYMBOL_DOOR);
+    this->min_x = 0;
+    this->min_y = 0;
+    this->max_x = size;
+    this->max_y = size;
+    this->set_symbol(make_tuple(door_x, door_y), SYMBOL_DOOR_HIDDEN);
 }
 
 void Level::build_walls( void )
@@ -56,13 +60,13 @@ Map *Level::get_map()
 
 void Level::set_symbol(Position pos, int symbol)
 {
-    this->map[get<0>(pos)][get<1>(pos)] = symbol;
+    this->map[(int) floor(get<0>(pos))][(int) floor(get<1>(pos))] = symbol;
 }
 
 int Level::get_symbol(Position pos)
 {
-    int x = get<0>(pos);
-    int y = get<1>(pos);
+    int x = (int) floor(get<0>(pos));
+    int y = (int) floor(get<1>(pos));
     if ((x >= 0) && (x < this->size) &&
 	(y >= 0) && (y < this->size) ) {
 	return this->map[x][y];
@@ -76,7 +80,7 @@ Position Level::get_door(void)
     int index_y, index_x;
 
     for (Map::iterator it = this->map.begin(); it != this->map.end(); it++) {
-        auto elem = find(it->begin(), it->end(), 'D');
+        auto elem = find(it->begin(), it->end(), SYMBOL_DOOR_FOUND);
         if (elem != it->end()) {
             /* Found Door in map matrix */
             auto index_x = distance(this->map.begin(), it);
@@ -130,7 +134,8 @@ Position Bomb::get_pos()
 Player::Player(Position init_pos)
 {
     this->pos = init_pos;
-    this->bomb_count = 5;
+    this->bomb_count = 1;
+    this->bomb_range = 2;
     this->score = 0;
 }
 
@@ -178,4 +183,39 @@ Position Player::get_pos()
 void Player::set_pos(Position new_pos)
 {
     this->pos = new_pos;
+}
+
+/********************************************************************/
+/*********************** Enemy Class methods ************************/
+/********************************************************************/
+Enemy::Enemy(Position pos, Velocity vel, int score)
+{
+    this->pos = pos;
+    this->vel = vel;
+    this->score = score;
+}
+
+int Enemy::get_score()
+{
+    return this->score;
+}
+
+Position Enemy::get_pos()
+{
+    return this->pos;
+}
+
+void Enemy::set_pos(Position new_pos)
+{
+    this->pos = new_pos;
+}
+
+Velocity Enemy::get_velocity()
+{
+    return this->vel;
+}
+
+void Enemy::set_velocity(Velocity new_vel)
+{
+    this->vel = new_vel;
 }
