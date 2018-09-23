@@ -70,6 +70,7 @@ private:
     int score;
     Position pos;
     int bomb_count;
+    int bomb_range;
 
 public:
     Player(Position init_pos);
@@ -81,6 +82,9 @@ public:
     void set_bomb_count(int new_count);
     void add_bomb();
     void remove_bomb();
+    int get_bomb_range();
+    void set_bomb_range(int new_range);
+};
 
 class Enemy {
 private:

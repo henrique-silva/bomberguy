@@ -201,6 +201,19 @@ void Player::remove_bomb()
     }
 }
 
+int Player::get_bomb_range()
+{
+    return this->bomb_range;
+}
+
+void Player::set_bomb_range(int new_range)
+{
+    /* Avoid ultra-small bomb range */
+    if (new_range >= 1) {
+	this->bomb_range = new_range;
+    }
+}
+
 Position Player::get_pos()
 {
     return this->pos;
