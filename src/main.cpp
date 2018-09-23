@@ -11,6 +11,9 @@
 #include "keyboard.hpp"
 
 using namespace std::chrono;
+uint64_t get_now_ms() {
+    return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+}
 
 int main ()
 {
@@ -21,9 +24,11 @@ int main ()
     uint64_t T;
     int x, y;
 
+    Position pos;
+
     Level *lvl = new Level(15, 5, 1);
 
-    Player *player = new Player(std::make_tuple(1, 1));
+    Player *player = new Player(std::make_tuple(1, 2));
 
     Screen *screen = new Screen(lvl);
 
@@ -56,14 +61,23 @@ int main ()
     //background_player->play(silence_sample);
 
     Audio::Player *sfx_player = new Audio::Player();
-    sfx_player->init();
+    //sfx_player->init();
     //sfx_player->play(silence_sample);
 
     /* Start background track */
     //background_player->play(bg_music);
 
+    T = get_now_ms();
+    t1 = T;
+    x = y = 1;
+    control->move_player(std::make_tuple(x, y));
+
     while (1) {
-        Position pos;
+	t0 = t1;
+        t1 = get_now_ms();
+        deltaT = t1-t0;
+
+	control->update(deltaT);
         c = keyboard->getchar();
 
         switch (c) {
@@ -92,8 +106,8 @@ int main ()
             break;
 
         case ' ':
-            if (control->drop_bomb(std::make_tuple(x, y), 3, 1)) {
-		sfx_player->play(bomb_drop_sample);
+            if (control->drop_bomb(std::make_tuple(x, y), 3000, 3)) {
+		//sfx_player->play(bomb_drop_sample);
 	    }
             break;
 
@@ -102,12 +116,12 @@ int main ()
             keyboard->stop();
             screen->stop();
             //background_player->stop();
-            sfx_player->stop();
+            //sfx_player->stop();
             return 0;
         }
 
-        if (c) {
-            screen->update();
-        }
+	screen->update();
+
+	std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
 }

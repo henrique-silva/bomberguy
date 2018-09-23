@@ -53,6 +53,9 @@ void Screen::update()
 	    case SYMBOL_BOMB:
 		mvaddch(j, i, 'o');
 		break;
+	    case SYMBOL_EXPLOSION:
+		mvaddch(j, i, 'X');
+		break;
 	    }
 	}
     }

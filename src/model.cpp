@@ -15,7 +15,7 @@ Level::Level(int size, int door_x, int door_y)
 
     /* Draw const parts of the map */
     this->build_walls();
-    this->set_door(make_tuple(door_x, door_y));
+    this->set_symbol(make_tuple(door_x, door_y), SYMBOL_DOOR);
 }
 
 void Level::build_walls( void )
@@ -54,27 +54,12 @@ Map *Level::get_map()
     return &this->map;
 }
 
-void Level::set_door(Position pos)
+void Level::set_symbol(Position pos, int symbol)
 {
-    this->map[get<0>(pos)][get<1>(pos)] = SYMBOL_DOOR;
+    this->map[get<0>(pos)][get<1>(pos)] = symbol;
 }
 
-void Level::set_bomb(Position pos)
-{
-    this->map[get<0>(pos)][get<1>(pos)] = SYMBOL_BOMB;
-}
-
-void Level::set_space(Position pos)
-{
-    this->map[get<0>(pos)][get<1>(pos)] = SYMBOL_SPACE;
-}
-
-void Level::set_player(Position pos)
-{
-    this->map[get<0>(pos)][get<1>(pos)] = SYMBOL_PLAYER;
-}
-
-int Level::get_type(Position pos)
+int Level::get_symbol(Position pos)
 {
     int x = get<0>(pos);
     int y = get<1>(pos);
@@ -108,21 +93,32 @@ Bomb::Bomb(Position pos, int remaining_time, int range)
     this->pos = pos;
     this->remaining_time = remaining_time;
     this->range = range;
+    this->status = BOMB_ARMED;
 }
 
-int Bomb::get_remaining_time( void )
+int Bomb::get_remaining_time(void)
 {
     return this->remaining_time;
 }
 
-int Bomb::get_range( void )
+int Bomb::get_range(void)
 {
     return this->range;
 }
 
-void Bomb::update_remaining_time(int new_time)
+void Bomb::set_remaining_time(int new_time)
 {
     this->remaining_time = new_time;
+}
+
+int Bomb::get_status(void)
+{
+    return this->status;
+}
+
+void Bomb::set_status(int sts)
+{
+    this->status = sts;
 }
 
 Position Bomb::get_pos()
@@ -155,7 +151,23 @@ int Player::get_bomb_count()
 
 void Player::set_bomb_count(int new_count)
 {
-    this->bomb_count = new_count;
+    /* Avoid negative bomb count */
+    if (new_count >= 0) {
+	this->bomb_count = new_count;
+    }
+}
+
+void Player::add_bomb()
+{
+    this->bomb_count++;
+}
+
+void Player::remove_bomb()
+{
+    /* Avoid negative bomb count */
+    if (this->bomb_count > 0) {
+	this->bomb_count--;
+    }
 }
 
 Position Player::get_pos()

@@ -17,6 +17,12 @@
 typedef std::tuple<int, int> Position;
 typedef std::vector<std::vector<char> > Map;
 
+enum {
+    BOMB_ARMED,
+    BOMB_EXPLODED,
+    BOMB_REMOVE
+};
+
 class Level {
 private:
     int size;
@@ -29,12 +35,8 @@ public:
     Level(int size, int door_x, int door_y);
     Map *get_map();
     Position get_door();
-    void set_door(Position pos);
-    void set_bomb(Position pos);
-    void set_player(Position pos);
-    void set_brick(Position pos);
-    void set_space(Position pos);
-    int get_type(Position pos);
+    void set_symbol(Position pos, int symbol);
+    int get_symbol(Position pos);
 };
 
 class Bomb {
@@ -42,13 +44,16 @@ private:
     Position pos;
     int remaining_time;
     int range;
+    int status;
 
 public:
     Bomb(Position pos, int remaining_time, int range);
-    void update_remaining_time(int new_time);
     Position get_pos();
+    void set_remaining_time(int new_time);
     int get_remaining_time();
     int get_range();
+    void set_status(int sts);
+    int get_status(void);
 };
 
 class Player {
@@ -65,6 +70,8 @@ public:
     void set_score(int new_score);
     int get_bomb_count();
     void set_bomb_count(int new_count);
+    void add_bomb();
+    void remove_bomb();
 };
 
 #endif
