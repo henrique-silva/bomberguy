@@ -72,7 +72,7 @@ int main ()
     x = y = 1;
     control->move_player(std::make_tuple(x, y));
 
-    while (1) {
+    while (control->get_game_status()) {
 	t0 = t1;
         t1 = get_now_ms();
         deltaT = t1-t0;
@@ -113,15 +113,19 @@ int main ()
 
         case 'q':
         case 'Q':
-            keyboard->stop();
-            screen->stop();
-            //background_player->stop();
-            //sfx_player->stop();
-            return 0;
+	    control->set_game_status(false);
+	    break;
         }
 
 	screen->update();
 
 	std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
+
+    keyboard->stop();
+    screen->stop();
+    //background_player->stop();
+    //sfx_player->stop();
+    return 0;
+
 }

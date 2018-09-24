@@ -2,6 +2,7 @@
 
 Controller::Controller(Screen *scr, Level *level, Player *player)
 {
+    this->game_status = true;
     this->screen = scr;
     this->level = level;
     this->player = player;
@@ -70,8 +71,9 @@ Position Controller::move_player(Position new_pos)
         /* TODO: if there are no more enemies, finish level */
         break;
 
+    case SYMBOL_ENEMY:
     case SYMBOL_EXPLOSION:
-        /* TODO: DIE DIE DIE DIE DIE */
+        this->kill_player();
         break;
 
     default:
@@ -95,26 +97,27 @@ Position Controller::move_enemy(Enemy *enemy, Position new_pos)
     switch (this->level->get_symbol(new_pos)) {
     case SYMBOL_PLAYER:
         /* Kill player */
+	this->kill_player();
         break;
 
     case SYMBOL_ENEMY:
     case SYMBOL_SPACE:
-	ret_pos = new_pos;
+        ret_pos = new_pos;
         this->level->set_symbol(old_pos, SYMBOL_SPACE);
         this->level->set_symbol(ret_pos, SYMBOL_ENEMY);
         enemy->set_pos(ret_pos);
-	break;
+        break;
 
     case SYMBOL_BRICK:
     case SYMBOL_WALL:
     case SYMBOL_DOOR_HIDDEN:
     case SYMBOL_DOOR_FOUND:
     case SYMBOL_BOMB:
-	/* Reverse direction */
-	std::get<0>(vel) *= -1;
-	std::get<1>(vel) *= -1;
-	enemy->set_velocity(vel);
-	break;
+        /* Reverse direction */
+        std::get<0>(vel) *= -1;
+        std::get<1>(vel) *= -1;
+        enemy->set_velocity(vel);
+        break;
     default:
         break;
     }
@@ -171,7 +174,7 @@ void Controller::update(double deltaT)
         double vel_x = std::get<0>(vel);
         double vel_y = std::get<1>(vel);
 
-	pos_x += (double)(vel_x * (deltaT/1000));
+        pos_x += (double)(vel_x * (deltaT/1000));
         pos_y += (double)(vel_y * (deltaT/1000));
 
         pos = this->move_enemy(*e, std::make_tuple(pos_x, pos_y));
@@ -203,10 +206,11 @@ void Controller::explode_bomb(Bomb *bomb)
             switch (this->level->get_symbol(explosion_pos)) {
             case SYMBOL_PLAYER:
                 /* Kill player */
+                this->kill_player();
                 break;
 
             case SYMBOL_WALL:
-	    case SYMBOL_DOOR_FOUND:
+            case SYMBOL_DOOR_FOUND:
                 /* Force the loop to go to the next explosion axis */
                 j = bomb->get_range();
                 break;
@@ -247,13 +251,13 @@ void Controller::explode_bomb(Bomb *bomb)
                 }
                 break;
 
-	    case SYMBOL_ENEMY:
+            case SYMBOL_ENEMY:
                 if (bomb->get_status() == BOMB_ARMED) {
                     this->level->set_symbol(explosion_pos, SYMBOL_EXPLOSION);
-		    this->kill_enemy(explosion_pos);
-		}
-		j = bomb->get_range();
-		break;
+                    this->kill_enemy(explosion_pos);
+                }
+                j = bomb->get_range();
+                break;
             default:
                 break;
             }
@@ -280,14 +284,29 @@ void Controller::remove_bomb(Bomb *bomb)
 void Controller::kill_enemy(Position pos)
 {
     for (std::vector<Enemy *>::iterator it = this->enemy_list.begin(); it != this->enemy_list.end();) {
-	double x = floor(std::get<0>((*it)->get_pos()));
-	double y = floor(std::get<1>((*it)->get_pos()));
-	if (std::make_tuple(x,y) == pos) {
-	    this->player->set_score(this->player->get_score() + (*it)->get_score());
-	    delete (*it);
-	    it = this->enemy_list.erase(it);
-	} else {
-	    it++;
-	}
+        double x = floor(std::get<0>((*it)->get_pos()));
+        double y = floor(std::get<1>((*it)->get_pos()));
+        if (std::make_tuple(x,y) == pos) {
+            this->player->set_score(this->player->get_score() + (*it)->get_score());
+            delete (*it);
+            it = this->enemy_list.erase(it);
+        } else {
+            it++;
+        }
     }
+}
+
+void Controller::kill_player(void)
+{
+    this->set_game_status(false);
+}
+
+bool Controller::get_game_status(void)
+{
+    return this->game_status;
+}
+
+void Controller::set_game_status(bool sts)
+{
+    this->game_status = sts;
 }

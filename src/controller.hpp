@@ -8,6 +8,7 @@
 
 class Controller {
 private:
+    bool game_status;
     Screen *screen;
     Level *level;
     Player *player;
@@ -22,11 +23,17 @@ private:
 public:
     Controller(Screen *scr, Level *lvl, Player *player);
     ~Controller();
-    Position move_player(Position new_pos);
 
-    void kill_enemy(Position pos);
-    Position move_enemy(Enemy *enemy, Position new_pos_d);
     void update(double deltaT);
+
+    void set_game_status(bool sts);
+    bool get_game_status(void);
+
+    Position move_player(Position new_pos);
+    void kill_player(void);
+
+    Position move_enemy(Enemy *enemy, Position new_pos);
+    void kill_enemy(Position pos);
 
     int drop_bomb(Position pos, int remaining_time);
     void remove_bomb(Bomb *bomb);
