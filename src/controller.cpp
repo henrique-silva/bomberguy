@@ -7,6 +7,14 @@ Controller::Controller(Screen *scr, Level *level, Player *player)
     this->level = level;
     this->player = player;
 
+    /* Load all audio samples */
+    this->bg_audio.load_sample(AUDIO_BACKGROUND_MUSIC);
+    this->sfx_audio.load_sample(AUDIO_BOMB_DROP);
+    this->sfx_audio.load_sample(AUDIO_EXPLOSION);
+    this->sfx_audio.load_sample(AUDIO_DOOR);
+
+    this->bg_audio.play(AUDIO_BACKGROUND_MUSIC);
+
     Enemy * enemy = new Enemy(std::make_tuple(1,13), std::make_tuple(1, 0), 100);
     Enemy * enemy_2 = new Enemy(std::make_tuple(11, 2), std::make_tuple(0, -1), 100);
 
@@ -36,6 +44,9 @@ int Controller::drop_bomb(Position pos, int remaining_time)
 
     /* Set the bomb on the map */
     this->level->set_symbol(pos, SYMBOL_BOMB);
+
+    /* Play sound effect */
+    this->sfx_audio.play(AUDIO_BOMB_DROP);
 
     /* Update the map with the bomb on screen */
     this->screen->update();
@@ -265,6 +276,8 @@ void Controller::explode_bomb(Bomb *bomb)
     }
 
     if (bomb->get_status() == BOMB_ARMED) {
+	/* Play sound effect */
+	this->sfx_audio.play(AUDIO_EXPLOSION);
         bomb->set_status(BOMB_EXPLODED);
         bomb->set_remaining_time(EXPLOSION_WEAROFF_TIME);
     } else if (bomb->get_status() == BOMB_EXPLODED){

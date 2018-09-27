@@ -3,6 +3,7 @@
 
 #include "screen.hpp"
 #include "model.hpp"
+#include "playback.hpp"
 
 #define EXPLOSION_WEAROFF_TIME 500
 
@@ -12,6 +13,10 @@ private:
     Screen *screen;
     Level *level;
     Player *player;
+
+    Audio::Player bg_audio;
+    Audio::Player sfx_audio;
+
     std::vector<Bomb *> bomb_list;
     std::vector<Enemy *> enemy_list;
 

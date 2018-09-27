@@ -1,10 +1,3 @@
-#include <iostream>
-#include <chrono>
-#include <thread>
-#include <vector>
-#include <ncurses.h>
-
-#include "audio.hpp"
 #include "model.hpp"
 #include "screen.hpp"
 #include "controller.hpp"
@@ -40,32 +33,6 @@ int main ()
     screen->update();
 
     keyboard->init();
-
-    /* TODO: Cleanup these pointers when ending the game */
-    /* Load all audio samples */
-    Audio::Sample *bg_music = new Audio::Sample();
-    Audio::Sample *door_sample = new Audio::Sample();
-    Audio::Sample *bomb_drop_sample = new Audio::Sample();
-
-    bomb_drop_sample->load("assets/sfx/bomb_drop.wav");
-    //bg_music->load("assets/wav/level.wav");
-    //door_sample->load("assets/sfx/door_discover.wav");
-
-
-    //Audio::Sample *silence_sample = new Audio::Sample();
-    //silence_sample->load("assets/silence.dat");
-
-    /* Audio initialization */
-    Audio::Player *background_player = new Audio::Player();
-    //background_player->init();
-    //background_player->play(silence_sample);
-
-    Audio::Player *sfx_player = new Audio::Player();
-    //sfx_player->init();
-    //sfx_player->play(silence_sample);
-
-    /* Start background track */
-    //background_player->play(bg_music);
 
     T = get_now_ms();
     t1 = T;
