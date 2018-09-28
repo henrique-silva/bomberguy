@@ -1,7 +1,10 @@
 #ifndef BOMB_HPP
 #define BOMB_HPP
 
-#include "util.hpp"
+#include <tuple>
+#include <algorithm>
+
+typedef std::tuple<int, int> Position;
 
 enum {
     BOMB_ARMED,

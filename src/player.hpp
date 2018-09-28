@@ -1,7 +1,9 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
-#include "util.hpp"
+#include <tuple>
+
+typedef std::tuple<int, int> Position;
 
 class Player {
 private:
@@ -9,6 +11,7 @@ private:
     Position pos;
     int bomb_count;
     int bomb_range;
+    int max_bombs;
 
 public:
     Player(Position init_pos);
@@ -18,6 +21,9 @@ public:
     void set_score(int new_score);
     int get_bomb_count();
     void set_bomb_count(int new_count);
+    int get_max_bombs();
+    void set_max_bombs(int new_max);
+
     void add_bomb();
     void remove_bomb();
     int get_bomb_range();

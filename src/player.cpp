@@ -67,3 +67,18 @@ void Player::set_pos(Position new_pos)
 {
     this->pos = new_pos;
 }
+
+int Player::get_max_bombs()
+{
+    return this->max_bombs;
+}
+
+void Player::set_max_bombs(int new_max)
+{
+    /* At least one bomb */
+    if (new_max > 0) {
+	this->max_bombs = new_max;
+	/* Include the new bomb in the inventory */
+	this->add_bomb();
+    }
+}

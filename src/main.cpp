@@ -5,7 +5,6 @@
 #include <ncurses.h>
 
 #include "audio.hpp"
-#include "model.hpp"
 #include "screen.hpp"
 #include "controller.hpp"
 #include "keyboard.hpp"
@@ -26,51 +25,19 @@ int main ()
 
     Position pos;
 
-    Level *lvl = new Level(15, 5, 1);
-
-    Player *player = new Player(std::make_tuple(1, 2));
-
-    Screen *screen = new Screen(lvl);
+    Player *player = new Player(std::make_tuple(1, 1));
 
     Keyboard *keyboard = new Keyboard();
 
-    Controller *control = new Controller(screen, lvl, player);
-
-    screen->init();
-    screen->update();
+    Controller *control = new Controller(player, 10, 20);
 
     keyboard->init();
 
-    /* TODO: Cleanup these pointers when ending the game */
-    /* Load all audio samples */
-    Audio::Sample *bg_music = new Audio::Sample();
-    Audio::Sample *door_sample = new Audio::Sample();
-    Audio::Sample *bomb_drop_sample = new Audio::Sample();
-
-    bomb_drop_sample->load("assets/sfx/bomb_drop.wav");
-    //bg_music->load("assets/wav/level.wav");
-    //door_sample->load("assets/sfx/door_discover.wav");
-
-
-    //Audio::Sample *silence_sample = new Audio::Sample();
-    //silence_sample->load("assets/silence.dat");
-
-    /* Audio initialization */
-    Audio::Player *background_player = new Audio::Player();
-    //background_player->init();
-    //background_player->play(silence_sample);
-
-    Audio::Player *sfx_player = new Audio::Player();
-    //sfx_player->init();
-    //sfx_player->play(silence_sample);
-
-    /* Start background track */
-    //background_player->play(bg_music);
-
     T = get_now_ms();
     t1 = T;
-    x = y = 1;
-    control->move_player(std::make_tuple(x, y));
+    x = std::get<1>(player->get_pos());
+    y = std::get<0>(player->get_pos());
+    control->move_player(std::make_tuple(y,x));
 
     while (control->get_game_status()) {
 	t0 = t1;
@@ -82,31 +49,31 @@ int main ()
 
         switch (c) {
         case KEY_UP:
-            pos = control->move_player(std::make_tuple(x, y-1));
-            x = std::get<0>(pos);
-            y = std::get<1>(pos);
+            pos = control->move_player(std::make_tuple(y-1, x));
+            x = std::get<1>(pos);
+            y = std::get<0>(pos);
             break;
 
         case KEY_LEFT:
-            pos = control->move_player(std::make_tuple(x-1, y));
-            x = std::get<0>(pos);
-            y = std::get<1>(pos);
+            pos = control->move_player(std::make_tuple(y, x-1));
+            x = std::get<1>(pos);
+            y = std::get<0>(pos);
             break;
 
         case KEY_DOWN:
-            pos = control->move_player(std::make_tuple(x, y+1));
-            x = std::get<0>(pos);
-            y = std::get<1>(pos);
+            pos = control->move_player(std::make_tuple(y+1, x));
+            x = std::get<1>(pos);
+            y = std::get<0>(pos);
             break;
 
         case KEY_RIGHT:
-            pos = control->move_player(std::make_tuple(x+1, y));
-            x = std::get<0>(pos);
-            y = std::get<1>(pos);
+            pos = control->move_player(std::make_tuple(y, x+1));
+            x = std::get<1>(pos);
+            y = std::get<0>(pos);
             break;
 
         case ' ':
-            if (control->drop_bomb(std::make_tuple(x, y), 3000)) {
+            if (control->drop_bomb(std::make_tuple(y, x), 2500)) {
 		//sfx_player->play(bomb_drop_sample);
 	    }
             break;
@@ -117,14 +84,14 @@ int main ()
 	    break;
         }
 
-	screen->update();
+	//screen->update();
 
 	std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
 
     keyboard->stop();
-    screen->stop();
-    //background_player->stop();
+    delete control;
+
     //sfx_player->stop();
     return 0;
 

@@ -1,13 +1,8 @@
 #include "screen.hpp"
 
-Screen::Screen(Level *lvl)
+Screen::Screen(Map *map)
 {
-    this->level = lvl;
-    this->map = this->map_old = lvl->get_map();
-}
-
-void Screen::init()
-{
+    this->map = map;
     this->win = initscr();      /* Start curses mode             */
     raw();                      /* Line buffering disabled     */
     keypad(this->win, TRUE);    /* We get F1, F2 etc..         */
@@ -15,14 +10,9 @@ void Screen::init()
     curs_set(0);                /* Do not display cursor */
 }
 
-void Screen::stop()
-{
-    endwin();
-}
-
 Screen::~Screen()
 {
-    this->stop();
+    endwin();
 }
 
 WINDOW* Screen::get_window()
@@ -32,49 +22,46 @@ WINDOW* Screen::get_window()
 
 void Screen::update()
 {
-    for (int i=0; i< this->map->size(); i++) {
-	for (int j=0; j < this->map->size(); j++) {
-	    switch ((*this->map)[i][j]) {
-	    case SYMBOL_WALL:
-		move(j,i);
-		attron(A_REVERSE);
+    for (int y=0; y <= this->map->get_size_y(); y++) {
+        for (int x=0; x <= this->map->get_size_x(); x++) {
+	    move(y,x);
+	    /* Print symbols from the top-most map (bricks->powerups for example) */
+	    if (this->map->has_flag(y, x, FLAG_WALL)) {
+                attron(A_REVERSE);
+                addch(' ');
+                attroff(A_REVERSE);
+
+	    } else if (this->map->has_flag(y, x, FLAG_FLAME)) {
+		addch('X');
+
+	    } else if (this->map->has_flag(y, x, FLAG_BRICK)) {
+                attron(A_DIM);
+                addch('#');
+                attroff(A_DIM);
+
+	    } else if (this->map->has_flag(y, x, FLAG_PLAYER)) {
+		addch('A');
+
+	    } else if (this->map->has_flag(y, x, FLAG_ENEMY)) {
+		addch('@');
+
+	    } else if (this->map->has_flag(y, x, FLAG_BOMB)) {
+		addch('o');
+
+	    } else if (this->map->has_flag(y, x, FLAG_DOOR)) {
+		addch('D');
+
+	    } else if (this->map->has_flag(y, x, FLAG_PWR_BOMB)) {
+		addch('B');
+
+	    } else if (this->map->has_flag(y, x, FLAG_PWR_FLAME)) {
+		addch('F');
+
+	    } else if (this->map->has_flag(y, x, FLAG_PWR_LIFE)) {
+		addch('L');
+
+	    } else {
 		addch(' ');
-		attroff(A_REVERSE);
-		break;
-
-	    case SYMBOL_DOOR_HIDDEN:
-		/* Door is hidden behind a brick, so display as the same character */
-	    case SYMBOL_BRICK:
-		move(j,i);
-		attron(A_DIM);
-		addch('#');
-		attroff(A_DIM);
-		break;
-
-	    case SYMBOL_SPACE:
-		mvaddch(j, i, ' ');
-		break;
-
-	    case SYMBOL_PLAYER:
-		mvaddch(j, i, 'A');
-		break;
-
-	    case SYMBOL_DOOR_FOUND:
-		mvaddch(j, i, 'D');
-		break;
-
-	    case SYMBOL_BOMB:
-		mvaddch(j, i, 'o');
-		break;
-
-	    case SYMBOL_EXPLOSION:
-		mvaddch(j, i, 'X');
-		break;
-
-	    case SYMBOL_ENEMY:
-		mvaddch(j, i, 'E');
-		break;
-
 	    }
 	}
     }

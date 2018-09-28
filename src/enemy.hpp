@@ -1,7 +1,10 @@
 #ifndef ENEMY_HPP
 #define ENEMY_HPP
 
-#include "util.hpp"
+#include <tuple>
+
+typedef std::tuple<double, double> Velocity;
+typedef std::tuple<int, int> Position;
 
 class Enemy {
 private:

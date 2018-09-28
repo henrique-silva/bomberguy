@@ -1,30 +1,45 @@
 #include "controller.hpp"
 
-Controller::Controller(Screen *scr, Level *level, Player *player)
+Controller::Controller(Player *player, int size_y, int size_x)
 {
     this->game_status = true;
-    this->screen = scr;
-    this->level = level;
     this->player = player;
+    this->map = new Map(size_y, size_x);
+    this->screen = new Screen(this->map);
 
-    Enemy * enemy = new Enemy(std::make_tuple(1,13), std::make_tuple(1, 0), 100);
-    Enemy * enemy_2 = new Enemy(std::make_tuple(11, 2), std::make_tuple(0, -1), 100);
+    Position player_pos = player->get_pos();
+    this->map->set_flag(std::get<0>(player_pos), std::get<1>(player_pos), FLAG_PLAYER);
+}
 
-    this->enemy_list.push_back(enemy);
-    this->level->set_symbol(enemy->get_pos(), SYMBOL_ENEMY);
+Controller::~Controller()
+{
+    for (std::vector<Bomb *>::iterator it = this->bomb_list.begin(); it != this->bomb_list.end();) {
+        delete (*it);
+        it = this->bomb_list.erase(it);
+    }
 
-    this->enemy_list.push_back(enemy_2);
-    this->level->set_symbol(enemy_2->get_pos(), SYMBOL_ENEMY);
+    for (std::vector<Enemy *>::iterator it = this->enemy_list.begin(); it != this->enemy_list.end();) {
+        delete (*it);
+        it = this->enemy_list.erase(it);
+    }
 
+    delete this->player;
+    delete this->screen;
+    delete this->map;
 }
 
 int Controller::drop_bomb(Position pos, int remaining_time)
 {
     Bomb *bomb;
 
+    /* Not enough bombs stored */
     if (this->player->get_bomb_count() <= 0) {
-        /* Not enough bombs stored */
         return 0;
+    }
+
+    /* There's already a bomb in this tile */
+    if (this->map->has_flag(std::get<0>(pos), std::get<1>(pos), FLAG_BOMB)) {
+	return 0;
     }
 
     /* Decrement player bomb count */
@@ -35,10 +50,7 @@ int Controller::drop_bomb(Position pos, int remaining_time)
     this->bomb_list.push_back(bomb);
 
     /* Set the bomb on the map */
-    this->level->set_symbol(pos, SYMBOL_BOMB);
-
-    /* Update the map with the bomb on screen */
-    this->screen->update();
+    this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_BOMB);
 
     return 1;
 }
@@ -49,41 +61,30 @@ Position Controller::move_player(Position new_pos)
 
     Position ret_pos = old_pos;
 
-    switch (this->level->get_symbol(new_pos)) {
-        /* Should not reach here in single-player mode */
-    case SYMBOL_PLAYER:
-        /* For walls, bricks and bombs, don't move, since we can't get over them */
-    case SYMBOL_WALL:
-    case SYMBOL_BRICK:
-    case SYMBOL_BOMB:
-        break;
+    int old_y = std::get<0>(old_pos);
+    int old_x = std::get<1>(old_pos);
 
-    case SYMBOL_SPACE:
-        if (this->level->get_symbol(old_pos) != SYMBOL_BOMB) {
-            this->level->set_symbol(old_pos, SYMBOL_SPACE);
-        }
-        this->level->set_symbol(new_pos, SYMBOL_PLAYER);
+    int new_y = std::get<0>(new_pos);
+    int new_x = std::get<1>(new_pos);
+
+    /* Check if player is not trying to move into a 'untrespassable' terrain */
+    if (this->map->is_walkable(new_y, new_x)) {
+        this->map->clear_flag(old_y, old_x, FLAG_PLAYER);
+        this->map->set_flag(new_y, new_x, FLAG_PLAYER);
         this->player->set_pos(new_pos);
         ret_pos = new_pos;
-        break;
-
-    case SYMBOL_DOOR_FOUND:
-        /* TODO: if there are no more enemies, finish level */
-        break;
-
-    case SYMBOL_ENEMY:
-    case SYMBOL_EXPLOSION:
-        this->kill_player();
-        break;
-
-    default:
-        /* Invalid symbol - possible error */
-        break;
     }
-    /* Update the map on screen */
-    this->screen->update();
 
     return ret_pos;
+}
+
+void Controller::spawn_enemy(int pos_y, int pos_x, double vel_y, double vel_x, int score)
+{
+    Enemy * enemy = new Enemy(std::make_tuple(pos_y,pos_x), std::make_tuple(vel_y, vel_x), score);
+
+    this->enemy_list.push_back(enemy);
+
+    this->map->set_flag(pos_y, pos_x, FLAG_ENEMY);
 }
 
 Position Controller::move_enemy(Enemy *enemy, Position new_pos)
@@ -93,41 +94,79 @@ Position Controller::move_enemy(Enemy *enemy, Position new_pos)
     Position old_pos = enemy->get_pos();
     Position ret_pos = old_pos;
 
-    /* Check if the new x position is valid */
-    switch (this->level->get_symbol(new_pos)) {
-    case SYMBOL_PLAYER:
-        /* Kill player */
-	this->kill_player();
-        break;
+    int old_y = std::get<0>(old_pos);
+    int old_x = std::get<1>(old_pos);
 
-    case SYMBOL_ENEMY:
-    case SYMBOL_SPACE:
+    int new_y = std::get<0>(new_pos);
+    int new_x = std::get<1>(new_pos);
+
+    /* Check if enemy is not trying to move into a 'untrespassable' terrain */
+    if (this->map->is_walkable(new_y, new_x)) {
+        this->map->clear_flag(old_y, old_x, FLAG_ENEMY);
+        this->map->set_flag(new_y, new_x, FLAG_ENEMY);
+        enemy->set_pos(new_pos);
         ret_pos = new_pos;
-        this->level->set_symbol(old_pos, SYMBOL_SPACE);
-        this->level->set_symbol(ret_pos, SYMBOL_ENEMY);
-        enemy->set_pos(ret_pos);
-        break;
-
-    case SYMBOL_BRICK:
-    case SYMBOL_WALL:
-    case SYMBOL_DOOR_HIDDEN:
-    case SYMBOL_DOOR_FOUND:
-    case SYMBOL_BOMB:
+    } else {
         /* Reverse direction */
         std::get<0>(vel) *= -1;
         std::get<1>(vel) *= -1;
         enemy->set_velocity(vel);
-        break;
-    default:
-        break;
     }
-
-    /* Update the map on screen */
-    this->screen->update();
 
     return ret_pos;
 }
 
+
+void Controller::check_colisions(void)
+{
+    /* Iterate over all blocks on map */
+    for (int y = 0; y < this->map->get_size_y(); y++) {
+        for (int x = 0; x < this->map->get_size_x(); x++) {
+            /* Check if player touched a dangerous object */
+            if (this->map->has_flag(y, x, FLAG_PLAYER) &&
+                (this->map->has_flag(y, x, FLAG_FLAME) || this->map->has_flag(y, x, FLAG_ENEMY))) {
+                this->kill_player();
+            }
+
+            /* Break brick */
+            if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_BRICK)) {
+                this->map->clear_flag(y, x, FLAG_BRICK);
+            }
+
+	    /* Bomb chain-effect */
+            if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_BOMB)) {
+		this->explode_bomb(this->find_bomb(std::make_tuple(y, x)));
+	    }
+
+            /* Please don't explode the walls, thank you */
+            if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_WALL)) {
+                this->map->clear_flag(y, x, FLAG_FLAME);
+            }
+
+	    /* Kill them with fire! */
+            if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_ENEMY)) {
+                this->map->clear_flag(y, x, FLAG_ENEMY);
+                this->kill_enemy(std::make_tuple(y, x));
+            }
+
+            /* Power up */
+            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_BOMB)) {
+                this->map->clear_flag(y, x, FLAG_PWR_BOMB);
+		this->player->set_max_bombs(this->player->get_max_bombs() + 1);
+            }
+            /* Power up */
+            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_FLAME)) {
+                this->map->clear_flag(y, x, FLAG_PWR_FLAME);
+		this->player->set_bomb_range(this->player->get_bomb_range() + 1);
+            }
+
+            /* Power up */
+            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_LIFE)) {
+            }
+        }
+    }
+
+}
 
 void Controller::update(double deltaT)
 {
@@ -181,6 +220,12 @@ void Controller::update(double deltaT)
 
     }
 
+    /* Proccess all the new positions */
+    this->check_colisions();
+
+    /* Update screen */
+    this->screen->update();
+
     move(2, 20);
     printw("Player Score: %d", this->player->get_score());
 }
@@ -195,71 +240,46 @@ void Controller::explode_bomb(Bomb *bomb)
 {
     Position pos = bomb->get_pos();
     Position explosion_pos;
-    int x = std::get<0>(pos);
-    int y = std::get<1>(pos);
-    int i,j;
+    int y = std::get<0>(pos);
+    int x = std::get<1>(pos);
+    int dir, range;
 
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < bomb->get_range(); j++) {
-            explosion_pos = std::make_tuple(x+(dir_x[i]*j), y+(dir_y[i]*j));
+    this->map->clear_flag(y, x, FLAG_BOMB);
 
-            switch (this->level->get_symbol(explosion_pos)) {
-            case SYMBOL_PLAYER:
-                /* Kill player */
-                this->kill_player();
-                break;
+    for (dir = 0; dir < 4; dir++) {
+        for (range = 0; range < bomb->get_range(); range++) {
+            x = std::get<1>(pos) + dir_x[dir]*range;
+            y = std::get<0>(pos) + dir_y[dir]*range;
+            explosion_pos = std::make_tuple(y, x);
 
-            case SYMBOL_WALL:
-            case SYMBOL_DOOR_FOUND:
-                /* Force the loop to go to the next explosion axis */
-                j = bomb->get_range();
-                break;
+            if (!this->map->is_valid_pos(y, x)) {
+                continue;
+            }
 
-            case SYMBOL_BRICK:
-                /* Destroy brick */
-                if (bomb->get_status() == BOMB_ARMED) {
-                    this->level->set_symbol(explosion_pos, SYMBOL_EXPLOSION);
+            if (bomb->get_status() == BOMB_ARMED) {
+		this->map->set_flag(y, x, FLAG_FLAME);
+
+                /* Don't allow the explosion to get past 'explosive' things */
+                if (this->map->has_flag(y, x, FLAG_BRICK) ||
+                    this->map->has_flag(y, x, FLAG_WALL) ||
+                    this->map->has_flag(y, x, FLAG_BOMB) ||
+                    this->map->has_flag(y, x, FLAG_ENEMY) ||
+                    this->map->has_flag(y, x, FLAG_DOOR) ||
+                    this->map->has_flag(y, x, FLAG_PLAYER) ) {
+                    range = bomb->get_range();
                 }
-                j = bomb->get_range();
-                break;
 
-            case SYMBOL_DOOR_HIDDEN:
-                this->level->set_symbol(explosion_pos, SYMBOL_DOOR_FOUND);
-                j = bomb->get_range();
-                break;
-
-            case SYMBOL_BOMB:
-                /* Explode bomb */
-                if (explosion_pos == bomb->get_pos()) {
-                    int symb = (bomb->get_status() == BOMB_EXPLODED) ? SYMBOL_SPACE : SYMBOL_EXPLOSION;
-                    this->level->set_symbol(explosion_pos, symb);
-                } else {
-                    /* Force another bomb to explode */
-                    this->explode_bomb(this->find_bomb(explosion_pos));
+            } else if (bomb->get_status() == BOMB_EXPLODED) {
+                this->map->clear_flag(y, x, FLAG_FLAME);
+                /* Don't allow the explosion to get past 'explosive' things */
+                if (this->map->has_flag(y, x, FLAG_BRICK) ||
+                    this->map->has_flag(y, x, FLAG_WALL) ||
+                    this->map->has_flag(y, x, FLAG_BOMB) ||
+                    this->map->has_flag(y, x, FLAG_ENEMY) ||
+                    this->map->has_flag(y, x, FLAG_DOOR) ||
+                    this->map->has_flag(y, x, FLAG_PLAYER) ) {
+                    range = bomb->get_range();
                 }
-                break;
-
-            case SYMBOL_SPACE:
-                if (bomb->get_status() == BOMB_ARMED) {
-                    this->level->set_symbol(explosion_pos, SYMBOL_EXPLOSION);
-                }
-                break;
-
-            case SYMBOL_EXPLOSION:
-                if (bomb->get_status() == BOMB_EXPLODED) {
-                    this->level->set_symbol(explosion_pos, SYMBOL_SPACE);
-                }
-                break;
-
-            case SYMBOL_ENEMY:
-                if (bomb->get_status() == BOMB_ARMED) {
-                    this->level->set_symbol(explosion_pos, SYMBOL_EXPLOSION);
-                    this->kill_enemy(explosion_pos);
-                }
-                j = bomb->get_range();
-                break;
-            default:
-                break;
             }
         }
     }
@@ -284,9 +304,9 @@ void Controller::remove_bomb(Bomb *bomb)
 void Controller::kill_enemy(Position pos)
 {
     for (std::vector<Enemy *>::iterator it = this->enemy_list.begin(); it != this->enemy_list.end();) {
-        double x = floor(std::get<0>((*it)->get_pos()));
-        double y = floor(std::get<1>((*it)->get_pos()));
-        if (std::make_tuple(x,y) == pos) {
+        int y = floor(std::get<0>((*it)->get_pos()));
+        int x = floor(std::get<1>((*it)->get_pos()));
+        if (std::make_tuple(y,x) == pos) {
             this->player->set_score(this->player->get_score() + (*it)->get_score());
             delete (*it);
             it = this->enemy_list.erase(it);
