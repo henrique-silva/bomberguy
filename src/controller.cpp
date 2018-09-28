@@ -125,6 +125,12 @@ void Controller::check_colisions(void)
             if (this->map->has_flag(y, x, FLAG_PLAYER) &&
                 (this->map->has_flag(y, x, FLAG_FLAME) || this->map->has_flag(y, x, FLAG_ENEMY))) {
                 this->kill_player();
+		/* Teleport player to the start position */
+		//this->move_player(std::make_tuple(1,1));
+		this->map->clear_flag(y, x, FLAG_PLAYER);
+		this->map->set_flag(1, 1, FLAG_PLAYER);
+		this->player->set_pos(std::make_tuple(1,1));
+
             }
 
             /* Break brick */
@@ -161,6 +167,8 @@ void Controller::check_colisions(void)
 
             /* Power up */
             if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_LIFE)) {
+                this->map->clear_flag(y, x, FLAG_PWR_LIFE);
+		this->player->set_lives(this->player->get_lives() + 1);
             }
         }
     }
@@ -224,9 +232,6 @@ void Controller::update(double deltaT)
 
     /* Update screen */
     this->screen->update();
-
-    move(2, 20);
-    printw("Player Score: %d", this->player->get_score());
 }
 
 Bomb *Controller::find_bomb(Position f_pos)
@@ -317,7 +322,11 @@ void Controller::kill_enemy(Position pos)
 
 void Controller::kill_player(void)
 {
-    this->set_game_status(false);
+    if (this->player->get_lives() == 0) {
+	//this->set_game_status(false);
+    } else {
+	this->player->set_lives(this->player->get_lives()-1);
+    }
 }
 
 bool Controller::get_game_status(void)
