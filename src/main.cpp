@@ -4,12 +4,11 @@
 #include <vector>
 #include <ncurses.h>
 
-#include "audio.hpp"
-#include "screen.hpp"
 #include "controller.hpp"
 #include "keyboard.hpp"
 
 using namespace std::chrono;
+
 uint64_t get_now_ms() {
     return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
 }
@@ -73,9 +72,7 @@ int main ()
             break;
 
         case ' ':
-            if (control->drop_bomb(std::make_tuple(y, x), 2500)) {
-		//sfx_player->play(bomb_drop_sample);
-	    }
+            control->drop_bomb(std::make_tuple(y, x), 2500);
             break;
 
         case 'q':
@@ -84,15 +81,12 @@ int main ()
 	    break;
         }
 
-	//screen->update();
-
 	std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
 
-    keyboard->stop();
+    delete keyboard;
     delete control;
+    delete player;
 
-    //sfx_player->stop();
     return 0;
-
 }

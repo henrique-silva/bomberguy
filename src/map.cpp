@@ -83,7 +83,7 @@ void Map::set_flag_random(int mod, Flag flag)
 	if ((x > 2 || y > 2) && is_empty(y, x)) {
 	    /* Hide the power-up under a brick */
             this->array[y][x].set(flag);
-            //this->array[y][x].set(FLAG_BRICK);
+            this->array[y][x].set(FLAG_BRICK);
         } else {
             /* try again */
             i--;

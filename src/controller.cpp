@@ -23,7 +23,6 @@ Controller::~Controller()
         it = this->enemy_list.erase(it);
     }
 
-    delete this->player;
     delete this->screen;
     delete this->map;
 }
