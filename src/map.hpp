@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <ctime>
 #include <bitset>
-//#include "powerup.h"
 
 #define RANDOM_BRICKS
 #define MAX_POWERUPS_SAME_TYPE 3

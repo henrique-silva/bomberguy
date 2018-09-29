@@ -3,7 +3,7 @@
 /********************************************************************/
 /*********************** Enemy Class methods ************************/
 /********************************************************************/
-Enemy::Enemy(Position pos, Velocity vel, int score)
+Enemy::Enemy(Position_d pos, Velocity vel, int score)
 {
     this->pos = pos;
     this->vel = vel;
@@ -15,12 +15,12 @@ int Enemy::get_score()
     return this->score;
 }
 
-Position Enemy::get_pos()
+Position_d Enemy::get_pos()
 {
     return this->pos;
 }
 
-void Enemy::set_pos(Position new_pos)
+void Enemy::set_pos(Position_d new_pos)
 {
     this->pos = new_pos;
 }

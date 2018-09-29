@@ -1,6 +1,6 @@
 #include "controller.hpp"
 
-Controller::Controller(Player *player, int size_y, int size_x)
+Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
 {
     this->game_status = true;
     this->player = player;
@@ -18,15 +18,9 @@ Controller::Controller(Player *player, int size_y, int size_x)
 
     this->bg_audio.play(AUDIO_BACKGROUND_MUSIC);
 
-    Enemy * enemy = new Enemy(std::make_tuple(1,13), std::make_tuple(1, 0), 100);
-    Enemy * enemy_2 = new Enemy(std::make_tuple(11, 2), std::make_tuple(0, -1), 100);
-
-    this->enemy_list.push_back(enemy);
-    this->level->set_symbol(enemy->get_pos(), SYMBOL_ENEMY);
-
-    this->enemy_list.push_back(enemy_2);
-    this->level->set_symbol(enemy_2->get_pos(), SYMBOL_ENEMY);
-
+    while (enemy_count-- > 0) {
+	this->spawn_enemy(100);
+    }
 }
 
 Controller::~Controller()
@@ -45,9 +39,10 @@ Controller::~Controller()
     delete this->map;
 }
 
-int Controller::drop_bomb(Position pos, int remaining_time)
+int Controller::drop_bomb(int remaining_time)
 {
     Bomb *bomb;
+    Position pos = this->player->get_pos();
 
     if (this->player->get_bomb_count() <= 0) {
         /* Not enough bombs stored */
@@ -74,7 +69,7 @@ int Controller::drop_bomb(Position pos, int remaining_time)
     return 1;
 }
 
-Position Controller::move_player(Position new_pos)
+Position Controller::move_player(Direction dir)
 {
     Position old_pos = this->player->get_pos();
 
@@ -83,15 +78,15 @@ Position Controller::move_player(Position new_pos)
     int old_y = std::get<0>(old_pos);
     int old_x = std::get<1>(old_pos);
 
-    int new_y = std::get<0>(new_pos);
-    int new_x = std::get<1>(new_pos);
+    int new_y = old_y + dir_y[dir];
+    int new_x = old_x + dir_x[dir];
 
     /* Check if player is not trying to move into a 'untrespassable' terrain */
     if (this->map->is_walkable(new_y, new_x)) {
         this->map->clear_flag(old_y, old_x, FLAG_PLAYER);
         this->map->set_flag(new_y, new_x, FLAG_PLAYER);
-        this->player->set_pos(new_pos);
-        ret_pos = new_pos;
+        this->player->set_pos(std::make_tuple(new_y, new_x));
+        ret_pos = this->player->get_pos();
     }
 
     return ret_pos;
@@ -106,18 +101,43 @@ void Controller::spawn_enemy(int pos_y, int pos_x, double vel_y, double vel_x, i
     this->map->set_flag(pos_y, pos_x, FLAG_ENEMY);
 }
 
-Position Controller::move_enemy(Enemy *enemy, Position new_pos)
+void Controller::spawn_enemy(int score)
+{
+    int x, y;
+    double vel_x = 0, vel_y=0;
+    do {
+	x = rand() % this->map->get_size_x();
+	y = rand() % this->map->get_size_y();
+
+    } while (!((x > 2 || y > 2) && this->map->is_empty(y, x)));
+
+    if (((y % 2) == 0) && (x % 2)) {
+	vel_x = 0;
+	vel_y = -1;
+    } else {
+	vel_x = -1;
+	vel_y = 0;
+    }
+
+    Enemy * enemy = new Enemy(std::make_tuple(y, x), std::make_tuple(vel_y, vel_x), score);
+
+    this->enemy_list.push_back(enemy);
+
+    this->map->set_flag(y, x, FLAG_ENEMY);
+}
+
+Position_d Controller::move_enemy(Enemy *enemy, Position_d new_pos)
 {
     Velocity vel = enemy->get_velocity();
 
-    Position old_pos = enemy->get_pos();
-    Position ret_pos = old_pos;
+    Position_d old_pos = enemy->get_pos();
+    Position_d ret_pos = old_pos;
 
-    int old_y = std::get<0>(old_pos);
-    int old_x = std::get<1>(old_pos);
+    int old_y = floor(std::get<0>(old_pos));
+    int old_x = floor(std::get<1>(old_pos));
 
-    int new_y = std::get<0>(new_pos);
-    int new_x = std::get<1>(new_pos);
+    int new_y = floor(std::get<0>(new_pos));
+    int new_x = floor(std::get<1>(new_pos));
 
     /* Check if enemy is not trying to move into a 'untrespassable' terrain */
     if (this->map->is_walkable(new_y, new_x)) {
@@ -144,13 +164,7 @@ void Controller::check_colisions(void)
             /* Check if player touched a dangerous object */
             if (this->map->has_flag(y, x, FLAG_PLAYER) &&
                 (this->map->has_flag(y, x, FLAG_FLAME) || this->map->has_flag(y, x, FLAG_ENEMY))) {
-                this->kill_player();
-		/* Teleport player to the start position */
-		//this->move_player(std::make_tuple(1,1));
-		this->map->clear_flag(y, x, FLAG_PLAYER);
-		this->map->set_flag(1, 1, FLAG_PLAYER);
-		this->player->set_pos(std::make_tuple(1,1));
-
+                this->kill_player(y, x);
             }
 
             /* Break brick */
@@ -172,6 +186,13 @@ void Controller::check_colisions(void)
             if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_ENEMY)) {
                 this->map->clear_flag(y, x, FLAG_ENEMY);
                 this->kill_enemy(std::make_tuple(y, x));
+            }
+
+	    /*  */
+            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_DOOR)) {
+		if (this->enemy_list.size() == 0) {
+		    this->set_game_status(false);
+                }
             }
 
             /* Power up */
@@ -230,7 +251,7 @@ void Controller::update(double deltaT)
     /************ Enemy Handling ************/
     for (std::vector<Enemy *>::iterator e = this->enemy_list.begin(); e != this->enemy_list.end(); e++) {
         Velocity vel;
-        Position pos;
+        Position_d pos;
 
         vel = (*e)->get_velocity();
         pos = (*e)->get_pos();
@@ -342,12 +363,16 @@ void Controller::kill_enemy(Position pos)
     }
 }
 
-void Controller::kill_player(void)
+void Controller::kill_player(int y, int x)
 {
     if (this->player->get_lives() == 0) {
-	//this->set_game_status(false);
+	this->set_game_status(false);
     } else {
 	this->player->set_lives(this->player->get_lives()-1);
+	/* Teleport player to the start position */
+	this->map->clear_flag(y, x, FLAG_PLAYER);
+	this->map->set_flag(1, 1, FLAG_PLAYER);
+	this->player->set_pos(std::make_tuple(1,1));
     }
 }
 

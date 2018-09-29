@@ -121,7 +121,7 @@ void Player::play(std::string sample_name)
         sample = load_sample(sample_name);
     }
     this->audio_sample = sample;
-
+    this->audio_sample->set_position(0);
 
     if (Pa_IsStreamStopped(stream)) {
         err = Pa_StartStream( stream );

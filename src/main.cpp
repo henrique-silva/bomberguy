@@ -34,9 +34,6 @@ int main ()
 
     T = get_now_ms();
     t1 = T;
-    x = std::get<1>(player->get_pos());
-    y = std::get<0>(player->get_pos());
-    control->move_player(std::make_tuple(y,x));
 
     while (control->get_game_status()) {
 	t0 = t1;
@@ -48,31 +45,23 @@ int main ()
 
         switch (c) {
         case KEY_UP:
-            pos = control->move_player(std::make_tuple(y-1, x));
-            x = std::get<1>(pos);
-            y = std::get<0>(pos);
+            pos = control->move_player(UP);
             break;
 
         case KEY_LEFT:
-            pos = control->move_player(std::make_tuple(y, x-1));
-            x = std::get<1>(pos);
-            y = std::get<0>(pos);
+            pos = control->move_player(LEFT);
             break;
 
         case KEY_DOWN:
-            pos = control->move_player(std::make_tuple(y+1, x));
-            x = std::get<1>(pos);
-            y = std::get<0>(pos);
+            pos = control->move_player(DOWN);
             break;
 
         case KEY_RIGHT:
-            pos = control->move_player(std::make_tuple(y, x+1));
-            x = std::get<1>(pos);
-            y = std::get<0>(pos);
+            pos = control->move_player(RIGHT);
             break;
 
         case ' ':
-            control->drop_bomb(std::make_tuple(y, x), 2500);
+            control->drop_bomb(2500);
             break;
 
         case 'q':

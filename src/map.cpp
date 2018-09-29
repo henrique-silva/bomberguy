@@ -57,19 +57,11 @@ void Map::draw_walls( void )
         }
     }
 
-#ifdef RANDOM_WALLS
-    /* 10 percent of all blocks will become random walls */
-    for (i = 0; i < (this->size_x*this->size_y*0.1); i++) {
-        x = rand() % this->size_x;
-        y = rand() % this->size_y;
-        this->array[y][x].set(FLAG_WALL);
-    }
-#endif
-
-#ifdef RANDOM_BRICKS
     /* 10 percent of all blocks will become random walls */
     this->set_flag_random((this->size_x*this->size_y*0.25), FLAG_BRICK);
-#endif
+
+    /* Hide door */
+    this->set_flag_random(1, FLAG_DOOR);
 }
 
 void Map::set_flag_random(int mod, Flag flag)

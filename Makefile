@@ -3,7 +3,7 @@ MAIN = bomberguy
 SRC_DIR = ./src
 BUILD_DIR = ./build
 
-SRCS += src/audio.cpp
+SRCS += src/playback.cpp
 SRCS += src/map.cpp
 SRCS += src/player.cpp
 SRCS += src/enemy.cpp
@@ -18,7 +18,7 @@ DEPS = $(OBJS:.o=.d)
 
 INCLUDES = -I./src/
 
-LIBS = $(shell ncurses5-config --libs) -pthread -lportaudio -lsndfile
+LIBS = $(shell ncurses5-config --libs) -pthread -lportaudio
 
 GFLAGS = -MD -MP -std=c++11 $(shell ncurses5-config --cflags) -g $(INCLUDES)
 
