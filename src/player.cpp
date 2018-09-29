@@ -7,6 +7,7 @@ Player::Player(Position init_pos)
     this->bomb_count = 1;
     this->bomb_range = 2;
     this->score = 0;
+    this->lives = 2;
 }
 
 int Player::get_score()
@@ -17,6 +18,16 @@ int Player::get_score()
 void Player::set_score(int new_score)
 {
     this->score = new_score;
+}
+
+int Player::get_lives()
+{
+    return this->lives;
+}
+
+void Player::set_lives(int new_lives)
+{
+    this->lives = new_lives;
 }
 
 int Player::get_bomb_count()
@@ -66,4 +77,19 @@ Position Player::get_pos()
 void Player::set_pos(Position new_pos)
 {
     this->pos = new_pos;
+}
+
+int Player::get_max_bombs()
+{
+    return this->max_bombs;
+}
+
+void Player::set_max_bombs(int new_max)
+{
+    /* At least one bomb */
+    if (new_max > 0) {
+	this->max_bombs = new_max;
+	/* Include the new bomb in the inventory */
+	this->add_bomb();
+    }
 }
