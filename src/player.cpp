@@ -7,7 +7,7 @@ Player::Player(Position init_pos)
     this->bomb_count = 1;
     this->bomb_range = 2;
     this->score = 0;
-    this->lives = 2;
+    this->lives = 1;
 }
 
 int Player::get_score()

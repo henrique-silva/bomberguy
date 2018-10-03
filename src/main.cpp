@@ -3,7 +3,6 @@
 #include <thread>
 #include <vector>
 #include <ncurses.h>
-
 #include "controller.hpp"
 #include "keyboard.hpp"
 
@@ -44,18 +43,26 @@ int main ()
         c = keyboard->getchar();
 
         switch (c) {
+	case 'w':
+	case 'W':
         case KEY_UP:
             pos = control->move_player(UP);
             break;
 
+	case 'a':
+	case 'A':
         case KEY_LEFT:
             pos = control->move_player(LEFT);
             break;
 
+	case 's':
+	case 'S':
         case KEY_DOWN:
             pos = control->move_player(DOWN);
             break;
 
+	case 'd':
+	case 'D':
         case KEY_RIGHT:
             pos = control->move_player(RIGHT);
             break;

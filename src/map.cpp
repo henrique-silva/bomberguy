@@ -6,6 +6,7 @@ Map::Map(int size_y, int size_x)
     /* Seed the random functions */
     srand(time(NULL));
 
+    this->door_found = 0;
     /* size_x = column count */
     /* size_y = line count */
     if ((size_x % 2) == 0) {

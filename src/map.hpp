@@ -44,6 +44,7 @@ private:
 public:
     Map(int size_y, int size_x);
 
+    int door_found;
     int get_size_x();
     int get_size_y();
     bool is_valid_pos(int y, int x);

@@ -6,10 +6,10 @@ int mix_and_play (const void *inputBuffer, void *outputBuffer, unsigned long fra
 		  const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
                   void *userData );
 
-Sample::Sample(std::string filename)
+Sample::Sample(std::string filename, float volume)
 {
     this->name = filename;
-    this->load(filename);
+    this->load(filename, volume);
 }
 
 Sample::~Sample()
@@ -22,7 +22,7 @@ bool Sample::finished()
     return (this->position) >= (this->data.size());
 }
 
-void Sample::load(std::string filename)
+void Sample::load(std::string filename, float volume)
 {
     std::string buffer;
     float fdata;
@@ -37,7 +37,7 @@ void Sample::load(std::string filename)
 
     while (std::getline(input_file, buffer) ) {
         std::stringstream(buffer) >> fdata;
-        (this->data).push_back(fdata);
+        (this->data).push_back(fdata*volume);
         count ++;
     }
     this->position = 0;
@@ -89,9 +89,9 @@ Sample *Player::get_data()
     return this->audio_sample;
 }
 
-Sample * Player::load_sample(std::string sample_name)
+Sample * Player::load_sample(std::string sample_name, float volume)
 {
-    Sample * sample = new Sample(sample_name);
+    Sample * sample = new Sample(sample_name, volume);
 
     sample_list.push_back(sample);
 

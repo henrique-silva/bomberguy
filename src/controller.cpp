@@ -1,3 +1,6 @@
+#include <chrono>
+#include <thread>
+
 #include "controller.hpp"
 
 Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
@@ -5,21 +8,27 @@ Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
     this->game_status = true;
     this->player = player;
     this->map = new Map(size_y, size_x);
-    this->screen = new Screen(this->map);
+    this->screen = new Screen(this->map, player);
 
     Position player_pos = player->get_pos();
     this->map->set_flag(std::get<0>(player_pos), std::get<1>(player_pos), FLAG_PLAYER);
 
+    this->screen->loading_page();
+
     /* Load all audio samples */
     this->bg_audio.load_sample(AUDIO_BACKGROUND_MUSIC);
+    this->bg_audio.load_sample(AUDIO_GAMEOVER_MUSIC);
     this->sfx_audio.load_sample(AUDIO_BOMB_DROP);
-    this->sfx_audio.load_sample(AUDIO_EXPLOSION);
-    this->sfx_audio.load_sample(AUDIO_DOOR);
+    this->sfx_audio.load_sample(AUDIO_EXPLOSION, 0.5);
+    this->sfx_audio.load_sample(AUDIO_DOOR_DISCOVER);
+    this->sfx_audio.load_sample(AUDIO_POWER_UP);
 
     this->bg_audio.play(AUDIO_BACKGROUND_MUSIC);
 
+    this->screen->start_map_screen();
+
     while (enemy_count-- > 0) {
-	this->spawn_enemy(100);
+        this->spawn_enemy(100);
     }
 }
 
@@ -51,7 +60,7 @@ int Controller::drop_bomb(int remaining_time)
 
     /* There's already a bomb in this tile */
     if (this->map->has_flag(std::get<0>(pos), std::get<1>(pos), FLAG_BOMB)) {
-	return 0;
+        return 0;
     }
 
     /* Decrement player bomb count */
@@ -106,17 +115,17 @@ void Controller::spawn_enemy(int score)
     int x, y;
     double vel_x = 0, vel_y=0;
     do {
-	x = rand() % this->map->get_size_x();
-	y = rand() % this->map->get_size_y();
+        x = rand() % this->map->get_size_x();
+        y = rand() % this->map->get_size_y();
 
     } while (!((x > 2 || y > 2) && this->map->is_empty(y, x)));
 
     if (((y % 2) == 0) && (x % 2)) {
-	vel_x = 0;
-	vel_y = -1;
+        vel_x = 0;
+        vel_y = -1;
     } else {
-	vel_x = -1;
-	vel_y = 0;
+        vel_x = -1;
+        vel_y = 0;
     }
 
     Enemy * enemy = new Enemy(std::make_tuple(y, x), std::make_tuple(vel_y, vel_x), score);
@@ -172,44 +181,57 @@ void Controller::check_colisions(void)
                 this->map->clear_flag(y, x, FLAG_BRICK);
             }
 
-	    /* Bomb chain-effect */
+            /* Bomb chain-effect */
             if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_BOMB)) {
-		this->explode_bomb(this->find_bomb(std::make_tuple(y, x)));
-	    }
+                this->explode_bomb(this->find_bomb(std::make_tuple(y, x)));
+            }
 
             /* Please don't explode the walls, thank you */
             if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_WALL)) {
                 this->map->clear_flag(y, x, FLAG_FLAME);
             }
 
-	    /* Kill them with fire! */
+            /* Kill them with fire! */
             if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_ENEMY)) {
                 this->map->clear_flag(y, x, FLAG_ENEMY);
                 this->kill_enemy(std::make_tuple(y, x));
             }
 
-	    /*  */
+            /* Check if the player can leave the game  */
             if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_DOOR)) {
-		if (this->enemy_list.size() == 0) {
-		    this->set_game_status(false);
+                if (this->enemy_list.size() == 0) {
+                    this->set_game_status(false);
                 }
+            }
+
+            if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_DOOR)) {
+		if (this->map->door_found == 0) {
+		    this->sfx_audio.play(AUDIO_DOOR_DISCOVER);
+		    this->map->door_found = 1;
+		}
             }
 
             /* Power up */
             if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_BOMB)) {
                 this->map->clear_flag(y, x, FLAG_PWR_BOMB);
-		this->player->set_max_bombs(this->player->get_max_bombs() + 1);
+                this->player->set_max_bombs(this->player->get_max_bombs() + 1);
+                this->player->set_score(this->player->get_score() + 50);
+                this->sfx_audio.play(AUDIO_POWER_UP);
             }
             /* Power up */
             if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_FLAME)) {
                 this->map->clear_flag(y, x, FLAG_PWR_FLAME);
-		this->player->set_bomb_range(this->player->get_bomb_range() + 1);
+                this->player->set_bomb_range(this->player->get_bomb_range() + 1);
+		this->player->set_score(this->player->get_score() + 50);
+                this->sfx_audio.play(AUDIO_POWER_UP);
             }
 
             /* Power up */
             if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_LIFE)) {
                 this->map->clear_flag(y, x, FLAG_PWR_LIFE);
-		this->player->set_lives(this->player->get_lives() + 1);
+                this->player->set_lives(this->player->get_lives() + 1);
+		this->player->set_score(this->player->get_score() + 50);
+                this->sfx_audio.play(AUDIO_POWER_UP);
             }
         }
     }
@@ -302,7 +324,7 @@ void Controller::explode_bomb(Bomb *bomb)
             }
 
             if (bomb->get_status() == BOMB_ARMED) {
-		this->map->set_flag(y, x, FLAG_FLAME);
+                this->map->set_flag(y, x, FLAG_FLAME);
 
                 /* Don't allow the explosion to get past 'explosive' things */
                 if (this->map->has_flag(y, x, FLAG_BRICK) ||
@@ -330,8 +352,8 @@ void Controller::explode_bomb(Bomb *bomb)
     }
 
     if (bomb->get_status() == BOMB_ARMED) {
-	/* Play sound effect */
-	this->sfx_audio.play(AUDIO_EXPLOSION);
+        /* Play sound effect */
+        this->sfx_audio.play(AUDIO_EXPLOSION);
         bomb->set_status(BOMB_EXPLODED);
         bomb->set_remaining_time(EXPLOSION_WEAROFF_TIME);
     } else if (bomb->get_status() == BOMB_EXPLODED){
@@ -365,14 +387,18 @@ void Controller::kill_enemy(Position pos)
 
 void Controller::kill_player(int y, int x)
 {
-    if (this->player->get_lives() == 0) {
-	this->set_game_status(false);
+    if (this->player->get_lives() == 1) {
+        this->set_game_status(false);
+	this->sfx_audio.pause();
+	this->screen->update();
+	this->bg_audio.play(AUDIO_GAMEOVER_MUSIC);
+	std::this_thread::sleep_for (std::chrono::milliseconds(4000));
     } else {
-	this->player->set_lives(this->player->get_lives()-1);
-	/* Teleport player to the start position */
-	this->map->clear_flag(y, x, FLAG_PLAYER);
-	this->map->set_flag(1, 1, FLAG_PLAYER);
-	this->player->set_pos(std::make_tuple(1,1));
+        this->player->set_lives(this->player->get_lives()-1);
+        /* Teleport player to the start position */
+        this->map->clear_flag(y, x, FLAG_PLAYER);
+        this->map->set_flag(1, 1, FLAG_PLAYER);
+        this->player->set_pos(std::make_tuple(1,1));
     }
 }
 
