@@ -9,6 +9,7 @@ Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
     this->player = player;
     this->map = new Map(size_y, size_x);
     this->screen = new Screen(this->map, player);
+    this->spec = new Spectator(this->map);
 
     Position player_pos = player->get_pos();
     this->map->set_flag(std::get<0>(player_pos), std::get<1>(player_pos), FLAG_PLAYER);
@@ -295,6 +296,7 @@ void Controller::update(double deltaT)
 
     /* Update screen */
     this->screen->update();
+    this->spec->update();
 }
 
 Bomb *Controller::find_bomb(Position f_pos)
@@ -391,6 +393,7 @@ void Controller::kill_player(int y, int x)
         this->set_game_status(false);
 	this->sfx_audio.pause();
 	this->screen->update();
+	this->spec->update();
 	this->bg_audio.play(AUDIO_GAMEOVER_MUSIC);
 	std::this_thread::sleep_for (std::chrono::milliseconds(4000));
     } else {

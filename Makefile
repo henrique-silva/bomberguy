@@ -11,6 +11,7 @@ SRCS += src/bomb.cpp
 SRCS += src/keyboard.cpp
 SRCS += src/screen.cpp
 SRCS += src/controller.cpp
+SRCS += src/remote_view.cpp
 SRCS += src/main.cpp
 
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
