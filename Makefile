@@ -32,7 +32,7 @@ LIBS = $(shell ncurses5-config --libs) -pthread -lportaudio
 
 GFLAGS = -MD -MP -std=c++11 $(shell ncurses5-config --cflags) -g $(INCLUDES)
 
-all: $(BUILD_DIR)/$(MAIN) client
+all: $(BUILD_DIR)/$(MAIN) $(BUILD_DIR)/client
 
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@)
@@ -41,7 +41,7 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 $(BUILD_DIR)/$(MAIN): $(OBJS)
 	g++ $^ $(LIBS) -o $@
 
-client: $(CLIENT_OBJS)
+$(BUILD_DIR)/client: $(CLIENT_OBJS)
 	g++ $^ $(LIBS) -o $@
 
 .PHONY: clean
