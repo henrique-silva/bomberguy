@@ -35,13 +35,13 @@ class Map {
 private:
     int size_x;
     int size_y;
-    std::vector<std::vector<std::bitset<MAX_FLAGS> > > array;
 
     void draw_walls();
     void add_powerups();
     void set_flag_random(int mod, Flag flag);
 
 public:
+    std::vector<std::vector<std::bitset<MAX_FLAGS> > > array;
     Map(int size_y, int size_x);
 
     int door_found;

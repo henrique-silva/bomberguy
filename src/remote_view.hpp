@@ -10,6 +10,9 @@
 #include <fstream>
 #include <string>
 #include "map.hpp"
+#include "player.hpp"
+
+#define LOG_FILE
 
 class Spectator {
 private:
@@ -22,13 +25,17 @@ private:
     std::ofstream out_fs;
 #endif
 
+    Player *player;
     Map *map;
 
 public:
-    Spectator(Map *map);
+    Spectator(Map *map, Player *player);
     ~Spectator();
     void connect();
     void update();
+    void send_map_info();
+    void send_player_info();
+    void send_config_data();
 };
 
 #endif

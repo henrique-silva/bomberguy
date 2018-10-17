@@ -9,7 +9,10 @@ Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
     this->player = player;
     this->map = new Map(size_y, size_x);
     this->screen = new Screen(this->map, player);
-    this->spec = new Spectator(this->map);
+
+    this->spec = new Spectator(this->map, player);
+    this->spec->connect();
+    this->spec->send_config_data();
 
     Position player_pos = player->get_pos();
     this->map->set_flag(std::get<0>(player_pos), std::get<1>(player_pos), FLAG_PLAYER);
@@ -47,6 +50,7 @@ Controller::~Controller()
 
     delete this->screen;
     delete this->map;
+    delete this->spec;
 }
 
 int Controller::drop_bomb(int remaining_time)
