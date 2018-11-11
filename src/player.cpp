@@ -10,6 +10,16 @@ Player::Player(Position init_pos)
     this->lives = 1;
 }
 
+int Player::get_id()
+{
+    return this->id;
+}
+
+void Player::set_id(int id)
+{
+    this->id = id;
+}
+
 int Player::get_score()
 {
     return this->score;

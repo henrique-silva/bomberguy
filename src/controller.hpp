@@ -23,8 +23,11 @@ class Controller {
 private:
     bool game_status;
     Screen *screen;
-    Player *player;
     Map *map;
+
+    std::vector<Player *>player_list;
+    int player_cnt;
+
     std::vector<Bomb *> bomb_list;
     std::vector<Enemy *> enemy_list;
 
@@ -37,9 +40,10 @@ private:
 
 
 public:
-    Controller(Player *player, int size_y, int size_x, int enemy_count=4);
-
+    Controller(int size_y, int size_x);
     ~Controller();
+
+    void init(int enemy_count=4);
 
     void update(double deltaT);
     void check_colisions(void);
@@ -47,8 +51,10 @@ public:
     void set_game_status(bool sts);
     bool get_game_status(void);
 
-    Position move_player(Direction dir);
-    void kill_player(int y, int x);
+    void add_player(Player *player);
+    Position move_player(Player *player, Direction dir);
+    void remove_player(Player *player);
+    void kill_player(Player *player, int y, int x);
 
     void spawn_enemy(int pos_y, int pos_x, double vel_y, double vel_x, int score);
     /* Random position */
@@ -56,7 +62,7 @@ public:
     Position_d move_enemy(Enemy *enemy, Position_d new_pos);
     void kill_enemy(Position pos);
 
-    int drop_bomb(int remaining_time);
+    int drop_bomb(Player *player, int remaining_time);
     void remove_bomb(Bomb *bomb);
     void explode_bomb(Bomb *bomb);
     Bomb *find_bomb(Position pos);

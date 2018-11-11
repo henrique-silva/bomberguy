@@ -65,7 +65,7 @@ void Map::draw_walls( void )
     this->set_flag_random(1, FLAG_DOOR);
 }
 
-void Map::set_flag_random(int mod, Flag flag)
+void Map::set_flag_random(int mod, int flag)
 {
     int x,y;
 
@@ -97,21 +97,30 @@ bool Map::is_valid_pos(int y, int x)
             (y >= 0) && (y < this->size_y) );
 }
 
-void Map::clear_flag(int y, int x, Flag flag)
+void Map::clear_flag(int y, int x, int flag)
 {
     if (is_valid_pos(y, x)) {
         this->array[y][x].reset(flag);
     }
 }
 
-void Map::set_flag(int y, int x, Flag flag)
+void Map::set_flag(int y, int x, int flag)
 {
     if (is_valid_pos(y, x)) {
         this->array[y][x].set(flag);
     }
 }
 
-bool Map::has_flag(int y, int x, Flag flag)
+Flag Map::get_flag(int y, int x)
+{
+    if (is_valid_pos(y, x)) {
+        return (Flag) this->array[y][x].to_ulong();
+    } else {
+	return FLAG_INVALID_BLOCK;
+    }
+}
+
+bool Map::has_flag(int y, int x, int flag)
 {
     if (is_valid_pos(y, x)) {
         return this->array[y][x].test(flag);
@@ -128,6 +137,7 @@ bool Map::is_empty(int y, int x)
         return false;
     }
 }
+
 
 bool Map::is_walkable(int y, int x)
 {

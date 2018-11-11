@@ -3,6 +3,7 @@
 
 #include <tuple>
 #include <algorithm>
+#include "player.hpp"
 
 typedef std::tuple<int, int> Position;
 
@@ -14,13 +15,15 @@ enum {
 
 class Bomb {
 private:
+    Player *owner;
     Position pos;
     int remaining_time;
     int range;
     int status;
 
 public:
-    Bomb(Position pos, int remaining_time, int range);
+    Bomb(Player *player, Position pos, int remaining_time, int range);
+    Player* get_owner();
     Position get_pos();
     void set_remaining_time(int new_time);
     int get_remaining_time();

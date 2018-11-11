@@ -2,6 +2,7 @@
 #define PLAYER_HPP
 
 #include <tuple>
+#include "map.hpp"
 
 typedef std::tuple<int, int> Position;
 
@@ -13,9 +14,16 @@ private:
     int bomb_range;
     int max_bombs;
     int lives;
+    int id;
 
 public:
     Player(Position init_pos);
+
+    int get_id();
+    void set_id(int id);
+
+    //int get_flag();
+
     Position get_pos();
     void set_pos(Position new_pos);
 

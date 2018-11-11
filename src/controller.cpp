@@ -3,15 +3,11 @@
 
 #include "controller.hpp"
 
-Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
+Controller::Controller(int size_y, int size_x)
 {
     this->game_status = true;
-    this->player = player;
     this->map = new Map(size_y, size_x);
-    this->screen = new Screen(this->map, player);
-
-    Position player_pos = player->get_pos();
-    this->map->set_flag(std::get<0>(player_pos), std::get<1>(player_pos), FLAG_PLAYER);
+    this->screen = new Screen(this->map);
 
     this->screen->loading_page();
 
@@ -22,7 +18,10 @@ Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
     this->sfx_audio.load_sample(AUDIO_EXPLOSION, 0.5);
     this->sfx_audio.load_sample(AUDIO_DOOR_DISCOVER);
     this->sfx_audio.load_sample(AUDIO_POWER_UP);
+}
 
+void Controller::init(int enemy_count)
+{
     this->bg_audio.play(AUDIO_BACKGROUND_MUSIC);
 
     this->screen->start_map_screen();
@@ -31,7 +30,6 @@ Controller::Controller(Player *player, int size_y, int size_x, int enemy_count)
         this->spawn_enemy(100);
     }
 }
-
 Controller::~Controller()
 {
     for (std::vector<Bomb *>::iterator it = this->bomb_list.begin(); it != this->bomb_list.end();) {
@@ -44,16 +42,21 @@ Controller::~Controller()
         it = this->enemy_list.erase(it);
     }
 
+    for (std::vector<Player *>::iterator it = this->player_list.begin(); it != this->player_list.end();) {
+        delete (*it);
+        it = this->player_list.erase(it);
+    }
+
     delete this->screen;
     delete this->map;
 }
 
-int Controller::drop_bomb(int remaining_time)
+int Controller::drop_bomb(Player *player, int remaining_time)
 {
     Bomb *bomb;
-    Position pos = this->player->get_pos();
+    Position pos = player->get_pos();
 
-    if (this->player->get_bomb_count() <= 0) {
+    if (player->get_bomb_count() <= 0) {
         /* Not enough bombs stored */
         return 0;
     }
@@ -64,10 +67,10 @@ int Controller::drop_bomb(int remaining_time)
     }
 
     /* Decrement player bomb count */
-    this->player->remove_bomb();
+    player->remove_bomb();
 
     /* Include bomb on the bomb-list to be handled by the controller */
-    bomb = new Bomb(pos, remaining_time, this->player->get_bomb_range());
+    bomb = new Bomb(player, pos, remaining_time, player->get_bomb_range());
     this->bomb_list.push_back(bomb);
 
     /* Set the bomb on the map */
@@ -78,9 +81,34 @@ int Controller::drop_bomb(int remaining_time)
     return 1;
 }
 
-Position Controller::move_player(Direction dir)
+void Controller::add_player(Player *player)
 {
-    Position old_pos = this->player->get_pos();
+    Position pos = player->get_pos();
+
+    player->set_id(this->player_cnt);
+    this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_PLAYER_BASE+this->player_cnt);
+
+    this->player_list.push_back(player);
+    this->player_cnt++;
+}
+
+void Controller::remove_player(Player *player)
+{
+    for (std::vector<Player *>::iterator it = this->player_list.begin(); it != this->player_list.end();) {
+        if ((*it) == player) {
+            delete (*it);
+            it = this->player_list.erase(it);
+        } else {
+            it++;
+        }
+    }
+
+    this->player_cnt--;
+}
+
+Position Controller::move_player(Player *player, Direction dir)
+{
+    Position old_pos = player->get_pos();
 
     Position ret_pos = old_pos;
 
@@ -92,10 +120,10 @@ Position Controller::move_player(Direction dir)
 
     /* Check if player is not trying to move into a 'untrespassable' terrain */
     if (this->map->is_walkable(new_y, new_x)) {
-        this->map->clear_flag(old_y, old_x, FLAG_PLAYER);
-        this->map->set_flag(new_y, new_x, FLAG_PLAYER);
-        this->player->set_pos(std::make_tuple(new_y, new_x));
-        ret_pos = this->player->get_pos();
+        this->map->clear_flag(old_y, old_x, FLAG_PLAYER_BASE+player->get_id());
+        this->map->set_flag(new_y, new_x, FLAG_PLAYER_BASE+player->get_id());
+        player->set_pos(std::make_tuple(new_y, new_x));
+        ret_pos = player->get_pos();
     }
 
     return ret_pos;
@@ -170,10 +198,46 @@ void Controller::check_colisions(void)
     /* Iterate over all blocks on map */
     for (int y = 0; y < this->map->get_size_y(); y++) {
         for (int x = 0; x < this->map->get_size_x(); x++) {
-            /* Check if player touched a dangerous object */
-            if (this->map->has_flag(y, x, FLAG_PLAYER) &&
-                (this->map->has_flag(y, x, FLAG_FLAME) || this->map->has_flag(y, x, FLAG_ENEMY))) {
-                this->kill_player(y, x);
+
+	    /* Check all players interactions */
+            for (auto player : this->player_list) {
+
+		/* Check if player touched a dangerous object */
+                if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) &&
+                    (this->map->has_flag(y, x, FLAG_FLAME) || this->map->has_flag(y, x, FLAG_ENEMY))) {
+                    this->kill_player(player, y, x);
+                }
+
+                /* Check if the player can leave the game (killed all enemies and other players)  */
+                if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) && this->map->has_flag(y, x, FLAG_DOOR)) {
+                    if ((this->enemy_list.size() == 0) && (this->player_cnt == 1)) {
+                        this->set_game_status(false);
+                    }
+                }
+
+                /* Power up */
+                if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) && this->map->has_flag(y, x, FLAG_PWR_BOMB)) {
+                    this->map->clear_flag(y, x, FLAG_PWR_BOMB);
+                    player->set_max_bombs(player->get_max_bombs() + 1);
+                    player->set_score(player->get_score() + 50);
+                    this->sfx_audio.play(AUDIO_POWER_UP);
+                }
+
+                /* Power up */
+                if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) && this->map->has_flag(y, x, FLAG_PWR_FLAME)) {
+                    this->map->clear_flag(y, x, FLAG_PWR_FLAME);
+                    player->set_bomb_range(player->get_bomb_range() + 1);
+                    player->set_score(player->get_score() + 50);
+                    this->sfx_audio.play(AUDIO_POWER_UP);
+                }
+
+                /* Power up */
+                if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) && this->map->has_flag(y, x, FLAG_PWR_LIFE)) {
+                    this->map->clear_flag(y, x, FLAG_PWR_LIFE);
+		    player->set_lives(player->get_lives() + 1);
+		    player->set_score(player->get_score() + 50);
+                    this->sfx_audio.play(AUDIO_POWER_UP);
+                }
             }
 
             /* Break brick */
@@ -197,42 +261,13 @@ void Controller::check_colisions(void)
                 this->kill_enemy(std::make_tuple(y, x));
             }
 
-            /* Check if the player can leave the game  */
-            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_DOOR)) {
-                if (this->enemy_list.size() == 0) {
-                    this->set_game_status(false);
+            if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_DOOR)) {
+                if (this->map->door_found == 0) {
+                    this->sfx_audio.play(AUDIO_DOOR_DISCOVER);
+                    this->map->door_found = 1;
                 }
             }
 
-            if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_DOOR)) {
-		if (this->map->door_found == 0) {
-		    this->sfx_audio.play(AUDIO_DOOR_DISCOVER);
-		    this->map->door_found = 1;
-		}
-            }
-
-            /* Power up */
-            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_BOMB)) {
-                this->map->clear_flag(y, x, FLAG_PWR_BOMB);
-                this->player->set_max_bombs(this->player->get_max_bombs() + 1);
-                this->player->set_score(this->player->get_score() + 50);
-                this->sfx_audio.play(AUDIO_POWER_UP);
-            }
-            /* Power up */
-            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_FLAME)) {
-                this->map->clear_flag(y, x, FLAG_PWR_FLAME);
-                this->player->set_bomb_range(this->player->get_bomb_range() + 1);
-		this->player->set_score(this->player->get_score() + 50);
-                this->sfx_audio.play(AUDIO_POWER_UP);
-            }
-
-            /* Power up */
-            if (this->map->has_flag(y, x, FLAG_PLAYER) && this->map->has_flag(y, x, FLAG_PWR_LIFE)) {
-                this->map->clear_flag(y, x, FLAG_PWR_LIFE);
-                this->player->set_lives(this->player->get_lives() + 1);
-		this->player->set_score(this->player->get_score() + 50);
-                this->sfx_audio.play(AUDIO_POWER_UP);
-            }
         }
     }
 
@@ -262,9 +297,10 @@ void Controller::update(double deltaT)
     /* Clean-up bombs */
     for (std::vector<Bomb *>::iterator it = this->bomb_list.begin(); it != this->bomb_list.end();) {
         if ((*it)->get_status() == BOMB_REMOVE) {
+	    (*it)->get_owner()->add_bomb();
             delete (*it);
             it = this->bomb_list.erase(it);
-            this->player->add_bomb();
+
         } else {
             it++;
         }
@@ -331,8 +367,8 @@ void Controller::explode_bomb(Bomb *bomb)
                     this->map->has_flag(y, x, FLAG_WALL) ||
                     this->map->has_flag(y, x, FLAG_BOMB) ||
                     this->map->has_flag(y, x, FLAG_ENEMY) ||
-                    this->map->has_flag(y, x, FLAG_DOOR) ||
-                    this->map->has_flag(y, x, FLAG_PLAYER) ) {
+                    this->map->has_flag(y, x, FLAG_DOOR) ) {
+                    //this->map->has_flag(y, x, FLAG_PLAYER)
                     range = bomb->get_range();
                 }
 
@@ -343,8 +379,8 @@ void Controller::explode_bomb(Bomb *bomb)
                     this->map->has_flag(y, x, FLAG_WALL) ||
                     this->map->has_flag(y, x, FLAG_BOMB) ||
                     this->map->has_flag(y, x, FLAG_ENEMY) ||
-                    this->map->has_flag(y, x, FLAG_DOOR) ||
-                    this->map->has_flag(y, x, FLAG_PLAYER) ) {
+                    this->map->has_flag(y, x, FLAG_DOOR) ) {
+                    //this->map->has_flag(y, x, FLAG_PLAYER) 
                     range = bomb->get_range();
                 }
             }
@@ -376,7 +412,7 @@ void Controller::kill_enemy(Position pos)
         int y = floor(std::get<0>((*it)->get_pos()));
         int x = floor(std::get<1>((*it)->get_pos()));
         if (std::make_tuple(y,x) == pos) {
-            this->player->set_score(this->player->get_score() + (*it)->get_score());
+            //this->player->set_score(this->player->get_score() + (*it)->get_score());
             delete (*it);
             it = this->enemy_list.erase(it);
         } else {
@@ -385,20 +421,25 @@ void Controller::kill_enemy(Position pos)
     }
 }
 
-void Controller::kill_player(int y, int x)
+void Controller::kill_player(Player *player, int y, int x)
 {
-    if (this->player->get_lives() == 1) {
-        this->set_game_status(false);
-	this->sfx_audio.pause();
-	this->screen->update();
-	this->bg_audio.play(AUDIO_GAMEOVER_MUSIC);
-	std::this_thread::sleep_for (std::chrono::milliseconds(4000));
-    } else {
-        this->player->set_lives(this->player->get_lives()-1);
+    if (player->get_lives() > 1) {
+        player->set_lives(player->get_lives()-1);
         /* Teleport player to the start position */
-        this->map->clear_flag(y, x, FLAG_PLAYER);
-        this->map->set_flag(1, 1, FLAG_PLAYER);
-        this->player->set_pos(std::make_tuple(1,1));
+        this->map->clear_flag(y, x, FLAG_PLAYER_BASE+player->get_id());
+        this->map->set_flag(1, 1, FLAG_PLAYER_BASE+player->get_id());
+        player->set_pos(std::make_tuple(1,1));
+    } else {
+        this->remove_player(player);
+    }
+
+    /* Check if everyone died */
+    if (this->player_cnt == 0) {
+        this->set_game_status(false);
+        this->sfx_audio.pause();
+        this->screen->update();
+        this->bg_audio.play(AUDIO_GAMEOVER_MUSIC);
+        std::this_thread::sleep_for (std::chrono::milliseconds(4000));
     }
 }
 

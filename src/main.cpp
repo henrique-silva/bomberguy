@@ -23,11 +23,15 @@ int main ()
 
     Position pos;
 
-    Player *player = new Player(std::make_tuple(1, 1));
+    Player *p1 = new Player(std::make_tuple(1, 1));
+    Player *p2 = new Player(std::make_tuple(1, 3));
 
     Keyboard *keyboard = new Keyboard();
 
-    Controller *control = new Controller(player, 10, 20);
+    Controller *control = new Controller(10, 20);
+    control->add_player(p1);
+    control->add_player(p2);
+    control->init();
 
     keyboard->init();
 
@@ -45,30 +49,47 @@ int main ()
         switch (c) {
 	case 'w':
 	case 'W':
+            pos = control->move_player(p1, UP);
+            break;
+
         case KEY_UP:
-            pos = control->move_player(UP);
+            pos = control->move_player(p2, UP);
             break;
 
 	case 'a':
 	case 'A':
+            pos = control->move_player(p1, LEFT);
+            break;
+
         case KEY_LEFT:
-            pos = control->move_player(LEFT);
+            pos = control->move_player(p2, LEFT);
             break;
 
 	case 's':
 	case 'S':
+            pos = control->move_player(p1, DOWN);
+            break;
+
         case KEY_DOWN:
-            pos = control->move_player(DOWN);
+            pos = control->move_player(p2, DOWN);
             break;
 
 	case 'd':
 	case 'D':
+	    pos = control->move_player(p1, RIGHT);
+            break;
+
         case KEY_RIGHT:
-            pos = control->move_player(RIGHT);
+            pos = control->move_player(p2, RIGHT);
             break;
 
         case ' ':
-            control->drop_bomb(2500);
+            control->drop_bomb(p1, 2500);
+            break;
+
+	case 'X':
+	case 'x':
+            control->drop_bomb(p2, 2500);
             break;
 
         case 'q':
@@ -82,7 +103,8 @@ int main ()
 
     delete keyboard;
     delete control;
-    delete player;
+    //delete p1;
+    //delete p2;
 
     return 0;
 }

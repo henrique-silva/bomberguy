@@ -1,12 +1,18 @@
 #include "bomb.hpp"
 
 /*********************** Bomb Class methods ************************/
-Bomb::Bomb(Position pos, int remaining_time, int range)
+Bomb::Bomb(Player *owner, Position pos, int remaining_time, int range)
 {
     this->pos = pos;
     this->remaining_time = remaining_time;
     this->range = range;
     this->status = BOMB_ARMED;
+    this->owner = owner;
+}
+
+Player* Bomb::get_owner()
+{
+    return this->owner;
 }
 
 int Bomb::get_remaining_time(void)
