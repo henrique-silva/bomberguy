@@ -8,10 +8,6 @@ Controller::Controller(int size_y, int size_x)
     this->game_status = true;
     this->map = new Map(size_y, size_x);
 
-    //this->screen = new Screen(this->map);
-
-    //this->screen->loading_page();
-
     /* Load all audio samples */
     this->bg_audio.load_sample(AUDIO_BACKGROUND_MUSIC);
     this->bg_audio.load_sample(AUDIO_GAMEOVER_MUSIC);

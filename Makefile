@@ -9,7 +9,6 @@ SRCS += src/player.cpp
 SRCS += src/enemy.cpp
 SRCS += src/bomb.cpp
 SRCS += src/keyboard.cpp
-SRCS += src/screen.cpp
 SRCS += src/controller.cpp
 SRCS += src/remote_view.cpp
 SRCS += src/main.cpp
