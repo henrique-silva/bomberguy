@@ -138,15 +138,12 @@ int main()
         }
 
 	screen->update();
+    
+    playercommand = keyboard->getchar();
+    send(socket_fd, &playercommand, 1, 0);
+    sleep(0.5);
     }
-
-    player_id = std::to_string(this->player->get_id())
-    while (/*?*/) {
-        playercommand = keyboard->getchar();
-        send(socket_fd, &player_id, 1, 0 )
-        send(socket_fd, &playercommand, 1, 0);
-        sleep(0.5);
-    }
+        
     
     delete screen;
     delete player;
