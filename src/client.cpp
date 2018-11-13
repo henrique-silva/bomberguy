@@ -9,6 +9,7 @@
 #include "screen.hpp"
 #include "map.hpp"
 #include "player.hpp"
+#include "keyboard.hpp"
 
 #define BUFFER_SIZE 1024
 
@@ -32,9 +33,10 @@ int main()
     struct sockaddr_in target;
     Map * map;
     Screen * screen;
+    Keyboard * keyboard;
     Player * player = new Player(std::make_tuple(0,0));
     char buffer[BUFFER_SIZE] = {0};
-
+    char playercommand, player_id;
     int init_cfg_flag = 0;
     int end_flag = 0;
     int size_x, size_y;
@@ -68,6 +70,10 @@ int main()
             read_until_stop(socket_fd, &buffer[0], ' ');
             size_y = atoi(buffer);
             break;
+        case 'P':
+            read_until_stop(socket_fd, &buffer[0], ' ');
+            player->set_id(atoi(buffer));
+            break;
         case 'L':
             read_until_stop(socket_fd, &buffer[0], ' ');
             player->set_lives(atoi(buffer));
@@ -92,6 +98,8 @@ int main()
 
     map = new Map(size_y, size_x);
     screen = new Screen(map, player);
+    keyboard = new Keyboard();
+    keyboard->init();
 
     while (end_flag == 0) {
 	if (!init_cfg_flag) {
@@ -134,6 +142,10 @@ int main()
         }
 
 	screen->update();
+    
+    playercommand = keyboard->getchar();
+    send(socket_fd, &playercommand, 1, 0);
+    sleep(0.5);
     }
 
     delete screen;
