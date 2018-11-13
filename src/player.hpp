@@ -15,14 +15,15 @@ private:
     int max_bombs;
     int lives;
     int id;
+    int socket_fd;
 
 public:
-    Player(Position init_pos);
+    Player(int socket_fd, Position init_pos);
 
     int get_id();
     void set_id(int id);
 
-    //int get_flag();
+    int get_socket_fd();
 
     Position get_pos();
     void set_pos(Position new_pos);

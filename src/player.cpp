@@ -1,13 +1,19 @@
 #include "player.hpp"
 
 /*********************** Player Class methods ************************/
-Player::Player(Position init_pos)
+Player::Player(int socket_fd, Position init_pos)
 {
+    this->socket_fd = socket_fd;
     this->pos = init_pos;
     this->bomb_count = 1;
     this->bomb_range = 2;
     this->score = 0;
     this->lives = 1;
+}
+
+int Player::get_socket_fd()
+{
+    return this->socket_fd;
 }
 
 int Player::get_id()
