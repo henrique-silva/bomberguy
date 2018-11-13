@@ -70,6 +70,10 @@ int main()
             read_until_stop(socket_fd, &buffer[0], ' ');
             size_y = atoi(buffer);
             break;
+        case 'P':
+            read_until_stop(socket_fd, &buffer[0], ' ');
+            player->set_id(atoi(buffer));
+            break;
         case 'L':
             read_until_stop(socket_fd, &buffer[0], ' ');
             player->set_lives(atoi(buffer));

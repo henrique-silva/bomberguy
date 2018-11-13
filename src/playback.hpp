@@ -4,7 +4,7 @@
 #include "portaudio.h"
 #include <vector>
 #include <algorithm>
-#include "RtAudio.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
