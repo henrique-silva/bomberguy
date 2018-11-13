@@ -6,6 +6,8 @@
 #include "controller.hpp"
 #include "keyboard.hpp"
 
+#define MAX_PLAYERS 2
+
 using namespace std::chrono;
 
 uint64_t get_now_ms() {
@@ -23,88 +25,145 @@ int main ()
 
     Position pos;
 
-    Player *p1 = new Player(std::make_tuple(1, 1));
-    Player *p2 = new Player(std::make_tuple(1, 3));
+    int server_fd;
+    struct sockaddr_in myself, client;
+    socklen_t client_size = (socklen_t)sizeof(client);
+    char input_buffer[50];
 
-    Keyboard *keyboard = new Keyboard();
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    printf("Socket criado\n");
 
-    Controller *control = new Controller(10, 20);
-    control->add_player(p1);
-    control->add_player(p2);
-    control->init();
+    /* Enable address reuse */
+    int reuse = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
+    }
 
-    keyboard->init();
+    /* Configure linger */
+    linger lin;
+    lin.l_onoff = 0;
+    lin.l_linger = 0;
+    setsockopt(server_fd, SOL_SOCKET, SO_LINGER, (const char *)&lin, sizeof(int));
+
+    /* Config address */
+    myself.sin_family = AF_INET;
+    myself.sin_port = htons(3001);
+    inet_aton("127.0.0.1", &(myself.sin_addr));
+
+    /* Bind server */
+    printf("Tentando abrir porta 3001\n");
+    if (bind(server_fd, (struct sockaddr*)&myself, sizeof(myself)) != 0) {
+        printf("Problemas ao abrir porta\n");
+        return 0;
+    }
+    printf("Abri porta 3001!\n");
+
+    /* Listen */
+    listen(server_fd, 2);
+    printf("Estou ouvindo na porta 3001!\n");
+
+    fd_set server_set;
+    int clients[MAX_PLAYERS] = {0};
+    int max_fd = server_fd;
+
+    Controller *control = new Controller(20, 40);
+
+    Player *new_player;
+    int connected_players = 0;
+
+    FD_ZERO(&server_set);
+    FD_SET(server_fd, &server_set);
+
+    /* Connect all clients */
+    while (connected_players < MAX_PLAYERS) {
+
+        int client_fd = accept(server_fd, NULL, NULL);
+
+        printf("New player connected: FD %d!\r\n", client_fd);
+
+        /* Add client fd to our server fd_set */
+        FD_SET(client_fd, &server_set);
+        clients[connected_players++] = client_fd;
+        if (client_fd > max_fd) {
+            max_fd = client_fd;
+        }
+
+        /* Add player and save its FD */
+        new_player = new Player(client_fd, std::make_tuple(1,2*connected_players));
+        control->add_player(new_player);
+    }
+
+    control->init_game();
 
     T = get_now_ms();
     t1 = T;
 
     while (control->get_game_status()) {
-	t0 = t1;
+        t0 = t1;
         t1 = get_now_ms();
         deltaT = t1-t0;
 
-	control->update((double)deltaT);
-        c = keyboard->getchar();
+        control->update((double)deltaT);
 
-        switch (c) {
-	case 'w':
-	case 'W':
-            pos = control->move_player(p1, UP);
-            break;
+        fd_set read_fd = server_set;
 
-        case KEY_UP:
-            pos = control->move_player(p2, UP);
-            break;
+	/* Set seelct timeout to 0s, so it won't block */
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 10000;
 
-	case 'a':
-	case 'A':
-            pos = control->move_player(p1, LEFT);
-            break;
+        int socket_cnt = select(max_fd+1, &read_fd, NULL, NULL, &tv);
 
-        case KEY_LEFT:
-            pos = control->move_player(p2, LEFT);
-            break;
+        for (int i = 0; i <= max_fd; i++) {
+	    if ( FD_ISSET(i, &read_fd ) && i != server_fd ) {
+            /* Ignore new connections, just proccess messages */
+                if (recv(i, &c, 1, MSG_DONTWAIT) > 0) {
+		    printf("Received message from FD %d: %c\r\n", i, c);
+                    Player *p = control->find_player_by_fd(i);
 
-	case 's':
-	case 'S':
-            pos = control->move_player(p1, DOWN);
-            break;
+                    switch (c) {
+                    case 'w':
+                    case 'W':
+                    case KEY_UP:
+                        pos = control->move_player(p, UP);
+                        break;
 
-        case KEY_DOWN:
-            pos = control->move_player(p2, DOWN);
-            break;
+                    case 'a':
+                    case 'A':
+                    case KEY_LEFT:
+                        pos = control->move_player(p, LEFT);
+                        break;
 
-	case 'd':
-	case 'D':
-	    pos = control->move_player(p1, RIGHT);
-            break;
+                    case 's':
+                    case 'S':
+                    case KEY_DOWN:
+                        pos = control->move_player(p, DOWN);
+                        break;
 
-        case KEY_RIGHT:
-            pos = control->move_player(p2, RIGHT);
-            break;
+                    case 'd':
+                    case 'D':
+                    case KEY_RIGHT:
+                        pos = control->move_player(p, RIGHT);
+                        break;
 
-        case ' ':
-            control->drop_bomb(p1, 2500);
-            break;
+                    case ' ':
+                        control->drop_bomb(p, 2500);
+                        break;
 
-	case 'X':
-	case 'x':
-            control->drop_bomb(p2, 2500);
-            break;
-
-        case 'q':
-        case 'Q':
-	    control->set_game_status(false);
-	    break;
+                    case 'q':
+                    case 'Q':
+                        control->remove_player(p);
+                        break;
+                    }
+                }
+            }
         }
-
-	std::this_thread::sleep_for (std::chrono::milliseconds(100));
+        std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
 
-    delete keyboard;
     delete control;
-    //delete p1;
-    //delete p2;
+
+    close(server_fd);
 
     return 0;
 }
