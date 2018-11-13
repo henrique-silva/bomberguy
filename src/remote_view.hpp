@@ -36,6 +36,7 @@ public:
     void send_map_info();
     void send_player_info();
     void send_config_data();
+    Player* get_player();
 };
 
 #endif

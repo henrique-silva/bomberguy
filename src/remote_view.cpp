@@ -4,34 +4,12 @@ Spectator::Spectator(Map *map, Player *player)
 {
     this->map = map;
     this->player = player;
-
-#ifdef LOG_FILE
-    this->out_fs.open("map_log.txt", std::ios::out | std::ios::binary);
-#endif
-
-    this->client_size = (socklen_t)sizeof(this->client_addr);
-
-    this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    //printf("Socket criado\n");
-
-    this->myself_addr.sin_family = AF_INET;
-    this->myself_addr.sin_port = htons(3001);
-    inet_aton("127.0.0.1", &(this->myself_addr.sin_addr));
-
-    //printf("Tentando abrir porta 3001\n");
-    if (bind(this->socket_fd, (struct sockaddr*)&(this->myself_addr), sizeof(this->myself_addr)) != 0) {
-        //printf("Problemas ao abrir porta\n");
-        return;
-    }
-    //printf("Abri porta 3001!\n");
-
-    listen(this->socket_fd, 2);
-    //printf("Estou ouvindo na porta 3001!\n");
+    this->connection_fd = player->get_socket_fd();
 }
 
-void Spectator::connect()
+Player* Spectator::get_player()
 {
-    this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&(this->client_addr), &(this->client_size));
+    return this->player;
 }
 
 void Spectator::send_config_data()
@@ -43,11 +21,10 @@ void Spectator::send_config_data()
     buffer.append(std::to_string(this->map->get_size_x()));
     buffer.append(" Y");
     buffer.append(std::to_string(this->map->get_size_y()));
+    buffer.append(" P");
+    buffer.append(std::to_string(this->player->get_id()));
     buffer.append(" \n");
 
-#ifdef LOG_FILE
-    this->out_fs.write(buffer.c_str(), buffer.size());
-#endif
     send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
 
     /* Player info */
@@ -65,9 +42,6 @@ void Spectator::send_player_info()
     buffer.append(" B");
     buffer.append(std::to_string(this->player->get_bomb_count()));
     buffer.append(" \n");
-#ifdef LOG_FILE
-    this->out_fs.write(buffer.c_str(), buffer.size());
-#endif
     send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
 
 }
@@ -86,9 +60,6 @@ void Spectator::send_map_info()
     }
     buffer.append("#");
 
-#ifdef LOG_FILE
-    this->out_fs.write(buffer.c_str(), buffer.size());
-#endif
     send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
 }
 
@@ -102,14 +73,8 @@ Spectator::~Spectator()
 {
     std::string buffer("Q");
 
-#ifdef LOG_FILE
-    this->out_fs.write(buffer.c_str(), buffer.size());
-#endif
     send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
 
     close(this->connection_fd);
     close(this->socket_fd);
-#ifdef LOG_FILE
-    this->out_fs.close();
-#endif
 }

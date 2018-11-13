@@ -27,6 +27,7 @@ private:
 
     std::vector<Player *>player_list;
     int player_cnt;
+    std::vector<Spectator *>spec_list;
 
     std::vector<Bomb *> bomb_list;
     std::vector<Enemy *> enemy_list;
@@ -37,8 +38,6 @@ private:
     /* Left, Up, Right, Down */
     const std::vector<int> dir_x {-1, 0, 1, 0};
     const std::vector<int> dir_y {0, -1, 0, 1};
-
-    Spectator *spec;
 
 public:
     Controller(int size_y, int size_x);
