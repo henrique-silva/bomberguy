@@ -40,7 +40,6 @@ int main()
     int init_cfg_flag = 0;
     int end_flag = 0;
     int size_x, size_y;
-    int player_id, read_player_id;
 
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     printf("Socket criado\n");
@@ -71,23 +70,17 @@ int main()
             read_until_stop(socket_fd, &buffer[0], ' ');
             size_y = atoi(buffer);
             break;
-        case 'P':
-            read_until_stop(socket_fd, &buffer[0], ' ');
-            read_player_id = atoi(buffer);
         case 'L':
             read_until_stop(socket_fd, &buffer[0], ' ');
-            if (read_player_id == player_id)
-                player->set_lives(atoi(buffer));
+            player->set_lives(atoi(buffer));
             break;
         case 'S':
             read_until_stop(socket_fd, &buffer[0], ' ');
-            if (read_player_id == player_id)
-                player->set_score(atoi(buffer));
+            player->set_score(atoi(buffer));
             break;
         case 'B':
             read_until_stop(socket_fd, &buffer[0], ' ');
-            if (read_player_id == player_id)
-                player->set_bomb_count(atoi(buffer));
+            player->set_bomb_count(atoi(buffer));
             break;
 
         case 'M':
