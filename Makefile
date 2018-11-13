@@ -16,6 +16,7 @@ SRCS += src/main.cpp
 CLIENT_SRCS += src/map.cpp
 CLIENT_SRCS += src/player.cpp
 CLIENT_SRCS += src/screen.cpp
+CLIENT_SRCS += src/keyboard.cpp
 CLIENT_SRCS += src/client.cpp
 
 
