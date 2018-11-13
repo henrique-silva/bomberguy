@@ -7,9 +7,10 @@ Controller::Controller(int size_y, int size_x)
 {
     this->game_status = true;
     this->map = new Map(size_y, size_x);
-    this->screen = new Screen(this->map);
 
-    this->screen->loading_page();
+    //this->screen = new Screen(this->map);
+
+    //this->screen->loading_page();
 
     /* Load all audio samples */
     this->bg_audio.load_sample(AUDIO_BACKGROUND_MUSIC);
@@ -20,16 +21,25 @@ Controller::Controller(int size_y, int size_x)
     this->sfx_audio.load_sample(AUDIO_POWER_UP);
 }
 
-void Controller::init(int enemy_count)
+Player *Controller::find_player_by_fd(int fd)
+{
+    return *(std::find_if(this->player_list.begin(), this->player_list.end(),
+                          [fd]( Player* const p) -> bool { return (p->get_socket_fd() == fd); }));
+}
+
+void Controller::init_game(int enemy_count)
 {
     this->bg_audio.play(AUDIO_BACKGROUND_MUSIC);
-
-    this->screen->start_map_screen();
 
     while (enemy_count-- > 0) {
         this->spawn_enemy(100);
     }
+
+    for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
+	(*spec)->send_config_data();
+    }
 }
+
 Controller::~Controller()
 {
     for (std::vector<Bomb *>::iterator it = this->bomb_list.begin(); it != this->bomb_list.end();) {
@@ -42,12 +52,16 @@ Controller::~Controller()
         it = this->enemy_list.erase(it);
     }
 
+    for (std::vector<Spectator *>::iterator it = this->spec_list.begin(); it != this->spec_list.end();) {
+        delete (*it);
+        it = this->spec_list.erase(it);
+    }
+
     for (std::vector<Player *>::iterator it = this->player_list.begin(); it != this->player_list.end();) {
         delete (*it);
         it = this->player_list.erase(it);
     }
 
-    delete this->screen;
     delete this->map;
 }
 
@@ -87,16 +101,29 @@ void Controller::add_player(Player *player)
 
     player->set_id(this->player_cnt);
     this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_PLAYER_BASE+this->player_cnt);
-
     this->player_list.push_back(player);
     this->player_cnt++;
+
+    Spectator *spec = new Spectator(this->map, player);
+    this->spec_list.push_back(spec);
 }
 
 void Controller::remove_player(Player *player)
 {
+    Position pos = player->get_pos();
+    this->map->clear_flag(std::get<0>(pos), std::get<1>(pos), FLAG_PLAYER_BASE+player->get_id());
+
     for (std::vector<Player *>::iterator it = this->player_list.begin(); it != this->player_list.end();) {
         if ((*it) == player) {
-            delete (*it);
+	    for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end();) {
+		if ((*spec)->get_player() == (*it)) {
+		    delete (*spec);
+		    spec = this->spec_list.erase(spec);
+		} else {
+		    spec++;
+		}
+	    }
+	    delete (*it);
             it = this->player_list.erase(it);
         } else {
             it++;
@@ -329,8 +356,10 @@ void Controller::update(double deltaT)
     /* Proccess all the new positions */
     this->check_colisions();
 
-    /* Update screen */
-    this->screen->update();
+    /* Update clients maps */
+    for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
+	(*spec)->update();
+    }
 }
 
 Bomb *Controller::find_bomb(Position f_pos)
@@ -437,7 +466,9 @@ void Controller::kill_player(Player *player, int y, int x)
     if (this->player_cnt == 0) {
         this->set_game_status(false);
         this->sfx_audio.pause();
-        this->screen->update();
+	for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
+	    (*spec)->update();
+	}
         this->bg_audio.play(AUDIO_GAMEOVER_MUSIC);
         std::this_thread::sleep_for (std::chrono::milliseconds(4000));
     }

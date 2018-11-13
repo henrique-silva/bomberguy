@@ -9,6 +9,7 @@
 #include "bomb.hpp"
 #include "enemy.hpp"
 #include "map.hpp"
+#include "remote_view.hpp"
 
 #define EXPLOSION_WEAROFF_TIME 500
 
@@ -38,6 +39,7 @@ private:
     const std::vector<int> dir_x {-1, 0, 1, 0};
     const std::vector<int> dir_y {0, -1, 0, 1};
 
+    Spectator *spec;
 
 public:
     Controller(int size_y, int size_x);
