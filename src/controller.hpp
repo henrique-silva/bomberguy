@@ -43,7 +43,9 @@ public:
     Controller(int size_y, int size_x);
     ~Controller();
 
-    void init(int enemy_count=4);
+    void init_game(int enemy_count=4);
+
+    Player *find_player_by_fd(int fd);
 
     void update(double deltaT);
     void check_colisions(void);
