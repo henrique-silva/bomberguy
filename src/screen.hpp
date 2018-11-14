@@ -26,7 +26,7 @@ class Screen {
 			     "                                  /___/       /___/  "};
 
 public:
-    Screen(Map *map);
+    Screen(Map *map, Player *player);
     ~Screen();
     WINDOW *get_map_window();
     void update();

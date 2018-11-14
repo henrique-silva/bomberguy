@@ -1,8 +1,9 @@
 #include "screen.hpp"
 
-Screen::Screen(Map *map)
+Screen::Screen(Map *map, Player *player)
 {
     this->map = map;
+    this->player = player;
 
     initscr();      /* Start curses mode             */
 
@@ -86,15 +87,12 @@ void Screen::update()
                 waddch(this->map_win,'#');
                 wattroff(this->map_win, A_DIM);
 
-		//} else if (this->map->get_flag(y, x) > FLAG_PLAYER_BASE) {
-                //waddch(this->map_win,'A');
-
-	    } else if (this->map->has_flag(y, x, FLAG_PLAYER_BASE)) {
-                waddch(this->map_win,'A');
-
-		/* Only for debug */
-	    } else if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+1)) {
-		waddch(this->map_win,'B');
+            } else if (this->map->get_flag(y, x) > (1 << FLAG_PLAYER_BASE)) {
+                for (int flag = FLAG_PLAYER_BASE; flag < MAX_FLAGS; flag++) {
+                    if (this->map->has_flag(y, x, flag)) {
+                        waddch(this->map_win,'0'+flag-FLAG_PLAYER_BASE);
+                    }
+                }
 
             } else if (this->map->has_flag(y, x, FLAG_ENEMY)) {
                 waddch(this->map_win,'@');
@@ -122,9 +120,10 @@ void Screen::update()
 
     wrefresh(this->map_win);      /* Refresh screen */
 
-    //mvwprintw(this->info_win, 1, 1, "Lives: %d", this->player->get_lives());
-    //mvwprintw(this->info_win, 2, 1, "Bombs: %d", this->player->get_bomb_count());
-    //mvwprintw(this->info_win, 3, 1, "Score: %d", this->player->get_score());
+    mvwprintw(this->info_win, 0, 1, "Player %d", this->player->get_id());
+    mvwprintw(this->info_win, 1, 1, "Lives: %d", this->player->get_lives());
+    mvwprintw(this->info_win, 2, 1, "Bombs: %d", this->player->get_bomb_count());
+    mvwprintw(this->info_win, 3, 1, "Score: %d", this->player->get_score());
 
     wrefresh(this->info_win);      /* Refresh screen */
 }
