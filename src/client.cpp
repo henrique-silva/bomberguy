@@ -55,20 +55,15 @@ int main()
     sfx_audio.load_sample(AUDIO_POWER_UP);
 
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    printf("Socket criado\n");
 
     target.sin_family = AF_INET;
     target.sin_port = htons(3001);
     inet_aton("127.0.0.1", &(target.sin_addr));
 
-    printf("Tentando conectar\n");
-
     if (connect(socket_fd, (struct sockaddr*)&target, sizeof(target)) != 0) {
-        printf("Problemas na conexao\n");
         return -1;
     }
 
-    printf("Conectei ao servidor\n");
 
     /* Lendo configuracoes iniciais */
     while(!init_cfg_flag){
@@ -101,13 +96,11 @@ int main()
             break;
 
         case 'M':
-            /* Server vai mandar dados do mapa, sai do loop de inicializacao */
+            /* Server will start to send map information, leave the initialization loop */
             init_cfg_flag = 1;
             break;
         }
     }
-
-    printf("Inicializando a tela\n");
 
     map = new Map(size_y, size_x);
     screen = new Screen(map, player);
@@ -116,12 +109,12 @@ int main()
     bg_audio.play(AUDIO_BACKGROUND_MUSIC);
 
     while (end_flag == 0) {
-	if (!init_cfg_flag) {
-	    recv(socket_fd, &buffer[0], 1, 0);
-	} else {
-	    buffer[0] = 'M';
-	    init_cfg_flag = 0;
-	}
+        if (!init_cfg_flag) {
+            recv(socket_fd, &buffer[0], 1, 0);
+        } else {
+            buffer[0] = 'M';
+            init_cfg_flag = 0;
+        }
 
         switch(buffer[0]) {
         case 'M':
@@ -137,10 +130,12 @@ int main()
             read_until_stop(socket_fd, &buffer[0], ' ');
             player->set_lives(atoi(buffer));
             break;
-        case 'S':
+
+	case 'S':
             read_until_stop(socket_fd, &buffer[0], ' ');
             player->set_score(atoi(buffer));
             break;
+
         case 'B':
             read_until_stop(socket_fd, &buffer[0], ' ');
             player->set_bomb_count(atoi(buffer));
@@ -156,8 +151,13 @@ int main()
 	    sfx_audio.play(sound);
 	    break;
 
-	default:
-	    break;
+        case 'Q':
+        case 'q':
+            end_flag = 1;
+            break;
+
+        default:
+            break;
         }
 
         screen->update();
