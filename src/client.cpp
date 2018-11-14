@@ -35,7 +35,7 @@ int main()
     Map * map;
     Screen * screen;
     Keyboard * keyboard;
-    Player * player = new Player(std::make_tuple(0,0));
+    Player * player = new Player(0, std::make_tuple(0,0));
     char buffer[BUFFER_SIZE] = {0};
     char playercommand, player_id;
     int init_cfg_flag = 0;
@@ -63,7 +63,6 @@ int main()
     if (connect(socket_fd, (struct sockaddr*)&target, sizeof(target)) != 0) {
         return -1;
     }
-
 
     /* Lendo configuracoes iniciais */
     while(!init_cfg_flag){
