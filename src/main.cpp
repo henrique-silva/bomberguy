@@ -16,7 +16,7 @@ uint64_t get_now_ms() {
 
 int main ()
 {
-    int c;
+    char c;
     uint64_t t0;
     uint64_t t1;
     uint64_t deltaT;
@@ -124,25 +124,21 @@ int main ()
                     switch (c) {
                     case 'w':
                     case 'W':
-                    case KEY_UP:
                         pos = control->move_player(p, UP);
                         break;
 
                     case 'a':
                     case 'A':
-                    case KEY_LEFT:
                         pos = control->move_player(p, LEFT);
                         break;
 
                     case 's':
                     case 'S':
-                    case KEY_DOWN:
                         pos = control->move_player(p, DOWN);
                         break;
 
                     case 'd':
                     case 'D':
-                    case KEY_RIGHT:
                         pos = control->move_player(p, RIGHT);
                         break;
 
