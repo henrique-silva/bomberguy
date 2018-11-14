@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <ncurses.h>
 
+#include "playback.hpp"
 #include "screen.hpp"
 #include "map.hpp"
 #include "player.hpp"
@@ -40,6 +41,18 @@ int main()
     int init_cfg_flag = 0;
     int end_flag = 0;
     int size_x, size_y;
+
+    std::string sound;
+    Audio::Player bg_audio;
+    Audio::Player sfx_audio;
+
+    /* Load all audio samples */
+    bg_audio.load_sample(AUDIO_BACKGROUND_MUSIC);
+    bg_audio.load_sample(AUDIO_GAMEOVER_MUSIC);
+    sfx_audio.load_sample(AUDIO_BOMB_DROP);
+    sfx_audio.load_sample(AUDIO_EXPLOSION, 0.5);
+    sfx_audio.load_sample(AUDIO_DOOR_DISCOVER);
+    sfx_audio.load_sample(AUDIO_POWER_UP);
 
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     printf("Socket criado\n");
@@ -100,6 +113,7 @@ int main()
     screen = new Screen(map, player);
     keyboard = new Keyboard();
     keyboard->init();
+    bg_audio.play(AUDIO_BACKGROUND_MUSIC);
 
     while (end_flag == 0) {
 	if (!init_cfg_flag) {
@@ -135,6 +149,11 @@ int main()
 	case 'Q':
 	case 'q':
 	    end_flag = 1;
+	case 'D':
+	    /* Play sound */
+	    read_until_stop(socket_fd, &buffer[0], ' ');
+	    sound = buffer;
+	    sfx_audio.play(sound);
 	    break;
 
 	default:
