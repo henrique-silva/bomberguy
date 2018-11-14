@@ -107,9 +107,9 @@ Position Map::set_random_player(int id)
 
 void Map::add_powerups()
 {
-    this->set_flag_random(std::max(this->size_x,this->size_y)*0.2, FLAG_PWR_BOMB);
-    this->set_flag_random(std::max(this->size_x,this->size_y)*0.2, FLAG_PWR_FLAME);
-    this->set_flag_random(std::max(this->size_x,this->size_y)*0.05, FLAG_PWR_LIFE);
+    this->set_flag_random(std::max(this->size_x,this->size_y)*0.3, FLAG_PWR_BOMB);
+    this->set_flag_random(std::max(this->size_x,this->size_y)*0.3, FLAG_PWR_FLAME);
+    this->set_flag_random(std::max(this->size_x,this->size_y)*0.1, FLAG_PWR_LIFE);
 }
 
 void Map::add_bricks()
