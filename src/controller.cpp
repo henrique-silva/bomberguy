@@ -120,6 +120,10 @@ void Controller::remove_player(Player *player)
     }
 
     this->player_cnt--;
+    if (player_cnt == 0) {
+	printf("All players disconnected. Closing server...\r\n");
+	this->set_game_status(false);
+    }
 }
 
 Position Controller::move_player(Player *player, Direction dir)
