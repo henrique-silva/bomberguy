@@ -160,11 +160,13 @@ int main()
 	    break;
         }
 
-	screen->update();
-    
-    playercommand = keyboard->getchar();
-    send(socket_fd, &playercommand, 1, 0);
-    sleep(0.5);
+        screen->update();
+
+        playercommand = keyboard->getchar();
+	if (playercommand > 0) {
+	    send(socket_fd, &playercommand, 1, 0);
+	}
+        sleep(0.5);
     }
 
     delete screen;
