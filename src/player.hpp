@@ -18,7 +18,7 @@ private:
     int socket_fd;
 
 public:
-    Player(int socket_fd, Position init_pos);
+    Player(int socket_fd);
 
     int get_id();
     void set_id(int id);

@@ -23,6 +23,7 @@ typedef enum {
 class Controller {
 private:
     bool game_status;
+
     Map *map;
 
     std::vector<Player *>player_list;

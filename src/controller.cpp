@@ -5,6 +5,9 @@
 
 Controller::Controller(int size_y, int size_x)
 {
+    /* Seed the random functions */
+    srand(time(NULL));
+
     this->game_status = true;
     this->map = new Map(size_y, size_x);
 }
@@ -17,6 +20,8 @@ Player *Controller::find_player_by_fd(int fd)
 
 void Controller::init_game(int enemy_count)
 {
+    this->map->add_bricks();
+
     while (enemy_count-- > 0) {
         this->spawn_enemy(100);
     }
@@ -86,10 +91,10 @@ int Controller::drop_bomb(Player *player, int remaining_time)
 
 void Controller::add_player(Player *player)
 {
-    Position pos = player->get_pos();
-
     player->set_id(this->player_cnt+1);
-    this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_PLAYER_BASE+player->get_id());
+
+    player->set_pos(this->map->set_random_player(player->get_id()));
+
     this->player_list.push_back(player);
     this->player_cnt++;
 
@@ -106,6 +111,7 @@ void Controller::remove_player(Player *player)
 
     for (std::vector<Player *>::iterator it = this->player_list.begin(); it != this->player_list.end();) {
         if ((*it) == player) {
+#if 0
             for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end();) {
                 if ((*spec)->get_player() == (*it)) {
                     delete (*spec);
@@ -114,6 +120,7 @@ void Controller::remove_player(Player *player)
                     spec++;
                 }
             }
+#endif
             delete (*it);
             it = this->player_list.erase(it);
         } else {
@@ -168,10 +175,10 @@ void Controller::spawn_enemy(int score)
     int x, y;
     double vel_x = 0, vel_y=0;
     do {
-        x = rand() % this->map->get_size_x();
-        y = rand() % this->map->get_size_y();
+        x = rand() % this->map->get_size_x()-1;
+        y = rand() % this->map->get_size_y()-1;
 
-    } while (!((x > 2 || y > 2) && this->map->is_empty(y, x)));
+    } while (!((x > 2 && y > 2) && this->map->is_empty(y, x)));
 
     if (((y % 2) == 0) && (x % 2)) {
         vel_x = 0;
@@ -231,6 +238,9 @@ void Controller::check_colisions(void)
                 if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) &&
                     (this->map->has_flag(y, x, FLAG_FLAME) || this->map->has_flag(y, x, FLAG_ENEMY))) {
                     this->kill_player(player, y, x);
+                    if (this->game_status == false) {
+                        return;
+                    }
                 }
 
                 /* Check if the player can leave the game (killed all enemies and other players)  */
@@ -361,9 +371,24 @@ void Controller::update(double deltaT)
     this->check_colisions();
 
     /* Update clients maps */
-    for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
-        (*spec)->update();
+    for (auto spec : this->spec_list) {
+        spec->update();
     }
+
+    /* Check if everyone died */
+    if (this->player_cnt == 1) {
+        Player *winner = *(std::find_if(this->player_list.begin(), this->player_list.end(),
+                                        []( Player* const p) -> bool { return (p->get_lives() > 0); }));
+
+        Spectator *spec = find_spec_by_player(winner);
+
+        for (auto spec : this->spec_list) {
+            spec->send_winner_alert(winner);
+        }
+
+        this->set_game_status(false);
+    }
+
 }
 
 Spectator *Controller::find_spec_by_player(Player *player)
@@ -474,16 +499,9 @@ void Controller::kill_player(Player *player, int y, int x)
         player->set_pos(std::make_tuple(1,1));
     } else {
         Spectator *spec = find_spec_by_player(player);
+        spec->send_gameover_alert();
         spec->send_sound_alert(AUDIO_GAMEOVER_MUSIC);
         this->remove_player(player);
-    }
-
-    /* Check if everyone died */
-    if (this->player_cnt == 0) {
-        this->set_game_status(false);
-        for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
-            (*spec)->update();
-        }
     }
 }
 

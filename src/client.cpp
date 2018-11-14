@@ -35,7 +35,7 @@ int main()
     Map * map;
     Screen * screen;
     Keyboard * keyboard;
-    Player * player = new Player(0, std::make_tuple(0,0));
+    Player * player = new Player(0);
     char buffer[BUFFER_SIZE] = {0};
     char playercommand, player_id;
     int init_cfg_flag = 0;
@@ -45,6 +45,8 @@ int main()
     std::string sound;
     Audio::Player bg_audio;
     Audio::Player sfx_audio;
+
+    screen = new Screen();
 
     /* Load all audio samples */
     bg_audio.load_sample(AUDIO_BACKGROUND_MUSIC);
@@ -60,6 +62,7 @@ int main()
     target.sin_port = htons(3001);
     inet_aton("127.0.0.1", &(target.sin_addr));
 
+    printf("\nConnecting to server!\n\r");
     if (connect(socket_fd, (struct sockaddr*)&target, sizeof(target)) != 0) {
         return -1;
     }
@@ -102,12 +105,20 @@ int main()
     }
 
     map = new Map(size_y, size_x);
-    screen = new Screen(map, player);
+
+    screen->set_player(player);
+    screen->set_map(map);
+
+    printf("You are PLAYER %d!\n", player->get_id());
+
     keyboard = new Keyboard();
     keyboard->init();
+
     bg_audio.play(AUDIO_BACKGROUND_MUSIC);
 
-    while (end_flag == 0) {
+    screen->start_map_screen();
+
+    while (end_flag != 2) {
         if (!init_cfg_flag) {
             recv(socket_fd, &buffer[0], 1, 0);
         } else {
@@ -147,15 +158,25 @@ int main()
             if (sound.compare(AUDIO_GAMEOVER_MUSIC) == 0) {
                 bg_audio.play(sound);
                 sfx_audio.pause();
-                std::this_thread::sleep_for (std::chrono::milliseconds(4000));
             } else {
                 sfx_audio.play(sound);
             }
             break;
 
+        case 'W':
+            read_until_stop(socket_fd, &buffer[0], ' ');
+            screen->winner_screen(atoi(buffer));
+            std::this_thread::sleep_for (std::chrono::milliseconds(4000));
+            break;
+
+        case 'E':
+            screen->game_over_screen();
+            end_flag = 1;
+            break;
+
         case 'Q':
         case 'q':
-            end_flag = 1;
+            end_flag = 2;
             break;
 
         default:
@@ -165,7 +186,7 @@ int main()
         screen->update();
 
         playercommand = keyboard->getchar();
-        if (playercommand > 0) {
+        if (playercommand > 0 && end_flag == 0) {
             send(socket_fd, &playercommand, 1, 0);
         }
         sleep(0.5);

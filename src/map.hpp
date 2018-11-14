@@ -5,11 +5,14 @@
 #include <cstdlib>
 #include <ctime>
 #include <bitset>
+#include <tuple>
 
 #define RANDOM_BRICKS
 #define MAX_POWERUPS_SAME_TYPE 3
 
 #define MAX_FLAGS 32
+
+typedef std::tuple<int, int> Position;
 
 typedef enum {
     //FLAG_SPACE, /* The block will be empty (or contain 'space' if none of the flags are set) */
@@ -44,10 +47,13 @@ private:
     void set_flag_random(int mod, int flag);
 
 public:
+    int door_found;
     std::vector<std::vector<std::bitset<MAX_FLAGS> > > array;
     Map(int size_y, int size_x);
 
-    int door_found;
+    void add_bricks();
+    Position set_random_player(int id);
+
     int get_size_x();
     int get_size_y();
     bool is_valid_pos(int y, int x);

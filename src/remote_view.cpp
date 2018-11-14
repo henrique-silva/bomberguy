@@ -80,9 +80,30 @@ void Spectator::send_sound_alert(std::string sound)
     send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
 }
 
+void Spectator::send_winner_alert(Player *winner)
+{
+    std::string buffer;
+
+    buffer.append("W");
+    buffer.append(std::to_string(winner->get_id()));
+    buffer.append(" \n");
+
+    send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
+}
+
+void Spectator::send_gameover_alert()
+{
+    std::string buffer;
+
+    buffer.append("E \n");
+
+    send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
+}
+
+
 Spectator::~Spectator()
 {
-    std::string buffer("Q");
+    std::string buffer("Q ");
 
     send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
 

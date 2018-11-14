@@ -6,7 +6,8 @@
 #include "controller.hpp"
 #include "keyboard.hpp"
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 10
+#define SERVER_PORT 3001
 
 using namespace std::chrono;
 
@@ -16,7 +17,7 @@ uint64_t get_now_ms() {
 
 int main ()
 {
-    char c;
+    char c, k;
     uint64_t t0;
     uint64_t t1;
     uint64_t deltaT;
@@ -25,18 +26,21 @@ int main ()
 
     Position pos;
 
+    Keyboard *kb = new Keyboard();
+    kb->init();
+
     int server_fd;
     struct sockaddr_in myself, client;
     socklen_t client_size = (socklen_t)sizeof(client);
     char input_buffer[50];
 
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    printf("Socket criado\n");
+    server_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    printf("Server socket created!\r\n");
 
     /* Enable address reuse */
     int reuse = 1;
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0) {
-        perror("setsockopt(SO_REUSEADDR) failed");
+        perror("setsockopt(SO_REUSEADDR) failed\r\n");
     }
 
     /* Configure linger */
@@ -47,26 +51,29 @@ int main ()
 
     /* Config address */
     myself.sin_family = AF_INET;
-    myself.sin_port = htons(3001);
+    myself.sin_port = htons(SERVER_PORT);
     inet_aton("127.0.0.1", &(myself.sin_addr));
 
     /* Bind server */
-    printf("Tentando abrir porta 3001\n");
+    printf("Trying to open port %d\r\n", SERVER_PORT);
     if (bind(server_fd, (struct sockaddr*)&myself, sizeof(myself)) != 0) {
-        printf("Problemas ao abrir porta\n");
+        printf("Error openning port\r\n");
         return 0;
     }
-    printf("Abri porta 3001!\n");
+    printf("Port %d open!\n", SERVER_PORT);
 
     /* Listen */
     listen(server_fd, 2);
-    printf("Estou ouvindo na porta 3001!\n");
+    printf("Listening on port %d!\r\n", SERVER_PORT);
 
     fd_set server_set;
     int clients[MAX_PLAYERS] = {0};
     int max_fd = server_fd;
 
-    Controller *control = new Controller(20, 40);
+    int map_size_y = 20;
+    int map_size_x = 40;
+
+    Controller *control = new Controller(map_size_y, map_size_x);
 
     Player *new_player;
     int connected_players = 0;
@@ -75,28 +82,37 @@ int main ()
     FD_SET(server_fd, &server_set);
 
     /* Connect all clients */
-    while (connected_players < MAX_PLAYERS) {
-
+    printf("Waiting players to connect! Press 's' to start!\r\n");
+    printf("Max allowed players: %d\r\n", MAX_PLAYERS);
+    while (connected_players < MAX_PLAYERS && k != 's' && k != 'S') {
         int client_fd = accept(server_fd, NULL, NULL);
 
-        printf("New player connected: FD %d!\r\n", client_fd);
+        if (client_fd > 0) {
+            printf("New player connected: FD %d!\r\n", client_fd);
 
-        /* Add client fd to our server fd_set */
-        FD_SET(client_fd, &server_set);
-        clients[connected_players++] = client_fd;
-        if (client_fd > max_fd) {
-            max_fd = client_fd;
+            /* Add client fd to our server fd_set */
+            FD_SET(client_fd, &server_set);
+            clients[connected_players++] = client_fd;
+            if (client_fd > max_fd) {
+                max_fd = client_fd;
+            }
+            /* Add player and save its FD */
+            new_player = new Player(client_fd);
+            control->add_player(new_player);
         }
 
-        /* Add player and save its FD */
-        new_player = new Player(client_fd, std::make_tuple(1,2*connected_players));
-        control->add_player(new_player);
+        k = kb->getchar();
+        if (k == 'q' || k == 'Q') {
+            delete kb;
+            return -1;
+        }
     }
 
-    control->init_game();
+    control->init_game((map_size_x * map_size_y) / 100);
 
     T = get_now_ms();
     t1 = T;
+    c = 0;
 
     while (control->get_game_status()) {
         t0 = t1;
@@ -164,12 +180,18 @@ int main ()
                 }
             }
         }
+
+	k = kb->getchar();
+        if (k == 'q' || k == 'Q') {
+	    break;
+	}
+
         std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
 
     delete control;
+    delete kb;
 
     close(server_fd);
-
     return 0;
 }

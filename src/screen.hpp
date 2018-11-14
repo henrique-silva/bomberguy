@@ -26,13 +26,19 @@ class Screen {
 			     "                                  /___/       /___/  "};
 
 public:
-    Screen(Map *map, Player *player);
+    Screen();
     ~Screen();
+
+    void set_player(Player *player);
+    void set_map(Map *map);
+
     WINDOW *get_map_window();
     void update();
     void update_limits();
     void loading_page();
     void start_map_screen();
+    void game_over_screen();
+    void winner_screen(int id);
 };
 
 #endif

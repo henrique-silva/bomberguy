@@ -1,10 +1,9 @@
 #include "player.hpp"
 
 /*********************** Player Class methods ************************/
-Player::Player(int socket_fd, Position init_pos)
+Player::Player(int socket_fd)
 {
     this->socket_fd = socket_fd;
-    this->pos = init_pos;
     this->bomb_count = 1;
     this->bomb_range = 2;
     this->score = 0;

@@ -1,26 +1,27 @@
 #include "screen.hpp"
 
-Screen::Screen(Map *map, Player *player)
+Screen::Screen()
 {
-    this->map = map;
-    this->player = player;
-
     initscr();      /* Start curses mode             */
 
     this->update_limits();
 
-    int map_y = this->map->get_size_y();
-    int map_x = this->map->get_size_x();
-
-    this->map_win = newwin(map_y+1, map_x+1, (this->max_y - map_y)/2, (this->max_x - map_x)/2);
-    this->info_win = newwin(4, map_x, ((this->max_y - map_y)/2) - 4, (this->max_x - map_x)/2);
-
     raw();                      /* Line buffering disabled     */
-    keypad(this->map_win, TRUE);    /* We get F1, F2 etc..         */
     keypad(stdscr, TRUE);    /* We get F1, F2 etc..         */
     noecho();                   /* Don't echo() while we do getch */
     curs_set(0);                /* Do not display cursor */
 
+    this->loading_page();
+}
+
+void Screen::set_player(Player *player)
+{
+    this->player = player;
+}
+
+void Screen::set_map(Map *map)
+{
+    this->map = map;
 }
 
 Screen::~Screen()
@@ -61,9 +62,36 @@ void Screen::start_map_screen()
     clear();
     refresh();
 
+    int map_y = this->map->get_size_y();
+    int map_x = this->map->get_size_x();
+
+    this->map_win = newwin(map_y+1, map_x+1, (this->max_y - map_y)/2, (this->max_x - map_x)/2);
+    this->info_win = newwin(4, map_x, ((this->max_y - map_y)/2) - 4, (this->max_x - map_x)/2);
+
     this->map_offset_y = (this->max_y - this->map->get_size_y())/2;
     this->map_offset_x = (this->max_x - this->map->get_size_y())/2;
+
     this->update();
+}
+
+void Screen::game_over_screen()
+{
+    int y, x;
+
+    getmaxyx(this->info_win, y, x);
+
+    wclear(this->info_win);
+    mvwprintw(this->info_win, 1, 1, "You lost!");
+    wrefresh(this->info_win);      /* Refresh screen */
+}
+
+void Screen::winner_screen(int id)
+{
+    wclear(this->info_win);
+
+    mvwprintw(this->info_win, 1, 1, "Player %d won!", id);
+
+    wrefresh(this->info_win);      /* Refresh screen */
 }
 
 void Screen::update()

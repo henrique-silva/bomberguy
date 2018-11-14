@@ -59,11 +59,8 @@ void Map::draw_walls( void )
         }
     }
 
-    /* 25 percent of all blocks will become random bricks */
-    this->set_flag_random((this->size_x*this->size_y*0.25), FLAG_BRICK);
-
     /* Hide door */
-    this->set_flag_random(1, FLAG_DOOR);
+    //this->set_flag_random(1, FLAG_DOOR);
 }
 
 void Map::set_flag_random(int mod, int flag)
@@ -74,7 +71,7 @@ void Map::set_flag_random(int mod, int flag)
     for (int i = 0; i < mod; i++) {
         x = rand() % this->size_x;
         y = rand() % this->size_y;
-	if ((x > 2 || y > 2) && is_empty(y, x)) {
+	if ((x > 2 && y > 2 && x < this->size_x-2 && y < this->size_y-2) && is_empty(y, x)) {
 	    /* Hide the power-up under a brick */
             this->array[y][x].set(flag);
             this->array[y][x].set(FLAG_BRICK);
@@ -85,11 +82,40 @@ void Map::set_flag_random(int mod, int flag)
     }
 }
 
+Position Map::set_random_player(int id)
+{
+    int y, x;
+    int i = 0;
+
+    for (int i = 0; i < 1; i++) {
+	if ((id % 2) == 0) {
+	    y = 1;
+	    x = rand() % this->get_size_x();
+	} else {
+	    x = 1;
+	    y = rand() % this->get_size_y();
+	}
+
+	if (is_empty(y, x)) {
+	    this->array[y][x].set(FLAG_PLAYER_BASE+id);
+	} else {
+	    i--;
+	}
+    }
+    return std::make_tuple(y, x);
+}
+
 void Map::add_powerups()
 {
     this->set_flag_random(std::max(this->size_x,this->size_y)*0.2, FLAG_PWR_BOMB);
     this->set_flag_random(std::max(this->size_x,this->size_y)*0.2, FLAG_PWR_FLAME);
     this->set_flag_random(std::max(this->size_x,this->size_y)*0.05, FLAG_PWR_LIFE);
+}
+
+void Map::add_bricks()
+{
+    /* 25 percent of all blocks will become random bricks */
+    this->set_flag_random((this->size_x*this->size_y*0.25), FLAG_BRICK);
 }
 
 bool Map::is_valid_pos(int y, int x)

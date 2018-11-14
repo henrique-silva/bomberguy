@@ -31,12 +31,17 @@ private:
 public:
     Spectator(Map *map, Player *player);
     ~Spectator();
+
     void connect();
     void update();
+
     void send_map_info();
     void send_player_info();
     void send_config_data();
     void send_sound_alert(std::string sound);
+    void send_winner_alert(Player *winner);
+    void send_gameover_alert();
+
     Player* get_player();
 };
 
