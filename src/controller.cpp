@@ -22,7 +22,7 @@ void Controller::init_game(int enemy_count)
     }
 
     for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
-	(*spec)->send_config_data();
+        (*spec)->send_config_data();
     }
 }
 
@@ -78,7 +78,7 @@ int Controller::drop_bomb(Player *player, int remaining_time)
 
     /* Play sound effect */
     for (auto spec : this->spec_list) {
-	spec->send_sound_alert(AUDIO_BOMB_DROP);
+        spec->send_sound_alert(AUDIO_BOMB_DROP);
     }
 
     return 1;
@@ -106,15 +106,15 @@ void Controller::remove_player(Player *player)
 
     for (std::vector<Player *>::iterator it = this->player_list.begin(); it != this->player_list.end();) {
         if ((*it) == player) {
-	    for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end();) {
-		if ((*spec)->get_player() == (*it)) {
-		    delete (*spec);
-		    spec = this->spec_list.erase(spec);
-		} else {
-		    spec++;
-		}
-	    }
-	    delete (*it);
+            for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end();) {
+                if ((*spec)->get_player() == (*it)) {
+                    delete (*spec);
+                    spec = this->spec_list.erase(spec);
+                } else {
+                    spec++;
+                }
+            }
+            delete (*it);
             it = this->player_list.erase(it);
         } else {
             it++;
@@ -125,8 +125,8 @@ void Controller::remove_player(Player *player)
     printf("Remaining players: %d\r\n", this->player_cnt);
 
     if (player_cnt == 0) {
-	printf("All players disconnected. Closing server...\r\n");
-	this->set_game_status(false);
+        printf("All players disconnected. Closing server...\r\n");
+        this->set_game_status(false);
     }
 }
 
@@ -224,10 +224,10 @@ void Controller::check_colisions(void)
     for (int y = 0; y < this->map->get_size_y(); y++) {
         for (int x = 0; x < this->map->get_size_x(); x++) {
 
-	    /* Check all players interactions */
+            /* Check all players interactions */
             for (auto player : this->player_list) {
 
-		/* Check if player touched a dangerous object */
+                /* Check if player touched a dangerous object */
                 if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) &&
                     (this->map->has_flag(y, x, FLAG_FLAME) || this->map->has_flag(y, x, FLAG_ENEMY))) {
                     this->kill_player(player, y, x);
@@ -245,8 +245,8 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_BOMB);
                     player->set_max_bombs(player->get_max_bombs() + 1);
                     player->set_score(player->get_score() + 50);
-		    Spectator *spec = find_spec_by_player(player);
-		    spec->send_sound_alert(AUDIO_POWER_UP);
+                    Spectator *spec = find_spec_by_player(player);
+                    spec->send_sound_alert(AUDIO_POWER_UP);
                 }
 
                 /* Power up */
@@ -254,17 +254,17 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_FLAME);
                     player->set_bomb_range(player->get_bomb_range() + 1);
                     player->set_score(player->get_score() + 50);
-		    Spectator *spec = find_spec_by_player(player);
-		    spec->send_sound_alert(AUDIO_POWER_UP);
+                    Spectator *spec = find_spec_by_player(player);
+                    spec->send_sound_alert(AUDIO_POWER_UP);
                 }
 
                 /* Power up */
                 if (this->map->has_flag(y, x, FLAG_PLAYER_BASE+player->get_id()) && this->map->has_flag(y, x, FLAG_PWR_LIFE)) {
                     this->map->clear_flag(y, x, FLAG_PWR_LIFE);
-		    player->set_lives(player->get_lives() + 1);
-		    player->set_score(player->get_score() + 50);
-		    Spectator *spec = find_spec_by_player(player);
-		    spec->send_sound_alert(AUDIO_POWER_UP);
+                    player->set_lives(player->get_lives() + 1);
+                    player->set_score(player->get_score() + 50);
+                    Spectator *spec = find_spec_by_player(player);
+                    spec->send_sound_alert(AUDIO_POWER_UP);
                 }
             }
 
@@ -291,11 +291,11 @@ void Controller::check_colisions(void)
 
             if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_DOOR)) {
                 if (this->map->door_found == 0) {
-		    for (auto spec : this->spec_list) {
-			spec->send_sound_alert(AUDIO_DOOR_DISCOVER);
-		    }
+                    for (auto spec : this->spec_list) {
+                        spec->send_sound_alert(AUDIO_DOOR_DISCOVER);
+                    }
 
-		    this->map->door_found = 1;
+                    this->map->door_found = 1;
                 }
             }
 
@@ -328,7 +328,7 @@ void Controller::update(double deltaT)
     /* Clean-up bombs */
     for (std::vector<Bomb *>::iterator it = this->bomb_list.begin(); it != this->bomb_list.end();) {
         if ((*it)->get_status() == BOMB_REMOVE) {
-	    (*it)->get_owner()->add_bomb();
+            (*it)->get_owner()->add_bomb();
             delete (*it);
             it = this->bomb_list.erase(it);
 
@@ -362,7 +362,7 @@ void Controller::update(double deltaT)
 
     /* Update clients maps */
     for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
-	(*spec)->update();
+        (*spec)->update();
     }
 }
 
@@ -420,7 +420,7 @@ void Controller::explode_bomb(Bomb *bomb)
                     this->map->has_flag(y, x, FLAG_BOMB) ||
                     this->map->has_flag(y, x, FLAG_ENEMY) ||
                     this->map->has_flag(y, x, FLAG_DOOR) ) {
-                    //this->map->has_flag(y, x, FLAG_PLAYER) 
+                    //this->map->has_flag(y, x, FLAG_PLAYER)
                     range = bomb->get_range();
                 }
             }
@@ -429,9 +429,9 @@ void Controller::explode_bomb(Bomb *bomb)
 
     if (bomb->get_status() == BOMB_ARMED) {
         /* Play sound effect */
-	for (auto spec : this->spec_list) {
-	    spec->send_sound_alert(AUDIO_EXPLOSION);
-	}
+        for (auto spec : this->spec_list) {
+            spec->send_sound_alert(AUDIO_EXPLOSION);
+        }
 
         bomb->set_status(BOMB_EXPLODED);
         bomb->set_remaining_time(EXPLOSION_WEAROFF_TIME);
@@ -473,17 +473,17 @@ void Controller::kill_player(Player *player, int y, int x)
         this->map->set_flag(1, 1, FLAG_PLAYER_BASE+player->get_id());
         player->set_pos(std::make_tuple(1,1));
     } else {
-	Spectator *spec = find_spec_by_player(player);
-	spec->send_sound_alert(AUDIO_GAMEOVER_MUSIC);
+        Spectator *spec = find_spec_by_player(player);
+        spec->send_sound_alert(AUDIO_GAMEOVER_MUSIC);
         this->remove_player(player);
     }
 
     /* Check if everyone died */
     if (this->player_cnt == 0) {
         this->set_game_status(false);
-	for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
-	    (*spec)->update();
-	}
+        for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
+            (*spec)->update();
+        }
     }
 }
 

@@ -28,7 +28,7 @@ namespace Audio {
         unsigned int position;
 
     public:
-	Sample(std::string filename, float volume = 1.0);
+        Sample(std::string filename, float volume = 1.0);
         ~Sample();
         void load(std::string filename, float volume = 1.0);
         std::vector<float> get_data();

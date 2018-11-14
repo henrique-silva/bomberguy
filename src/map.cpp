@@ -7,13 +7,14 @@ Map::Map(int size_y, int size_x)
     srand(time(NULL));
 
     this->door_found = 0;
+
     /* size_x = column count */
     /* size_y = line count */
     if ((size_x % 2) == 0) {
-	size_x++;
+        size_x++;
     }
     if ((size_y % 2) == 0) {
-	size_y++;
+        size_y++;
     }
     this->size_x = size_x;
     this->size_y = size_y;
@@ -58,7 +59,7 @@ void Map::draw_walls( void )
         }
     }
 
-    /* 10 percent of all blocks will become random walls */
+    /* 25 percent of all blocks will become random bricks */
     this->set_flag_random((this->size_x*this->size_y*0.25), FLAG_BRICK);
 
     /* Hide door */
@@ -116,7 +117,7 @@ Flag Map::get_flag(int y, int x)
     if (is_valid_pos(y, x)) {
         return (Flag) this->array[y][x].to_ulong();
     } else {
-	return FLAG_INVALID_BLOCK;
+        return FLAG_INVALID_BLOCK;
     }
 }
 

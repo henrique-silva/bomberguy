@@ -55,7 +55,7 @@ void Player::set_bomb_count(int new_count)
 {
     /* Avoid negative bomb count */
     if (new_count >= 0) {
-	this->bomb_count = new_count;
+        this->bomb_count = new_count;
     }
 }
 
@@ -68,7 +68,7 @@ void Player::remove_bomb()
 {
     /* Avoid negative bomb count */
     if (this->bomb_count > 0) {
-	this->bomb_count--;
+        this->bomb_count--;
     }
 }
 
@@ -81,7 +81,7 @@ void Player::set_bomb_range(int new_range)
 {
     /* Avoid ultra-small bomb range */
     if (new_range >= 1) {
-	this->bomb_range = new_range;
+        this->bomb_range = new_range;
     }
 }
 
@@ -104,8 +104,8 @@ void Player::set_max_bombs(int new_max)
 {
     /* At least one bomb */
     if (new_max > 0) {
-	this->max_bombs = new_max;
-	/* Include the new bomb in the inventory */
-	this->add_bomb();
+        this->max_bombs = new_max;
+        /* Include the new bomb in the inventory */
+        this->add_bomb();
     }
 }

@@ -107,16 +107,16 @@ int main ()
 
         fd_set read_fd = server_set;
 
-	/* Set seelct timeout to 0s, so it won't block */
-	struct timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = 10000;
+        /* Set seelct timeout to 0s, so it won't block */
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = 10000;
 
         int socket_cnt = select(max_fd+1, &read_fd, NULL, NULL, &tv);
 
         for (int i = 0; i <= max_fd; i++) {
-	    if ( FD_ISSET(i, &read_fd ) && i != server_fd ) {
-            /* Ignore new connections, just proccess messages */
+            if ( FD_ISSET(i, &read_fd ) && i != server_fd ) {
+                /* Ignore new connections, just proccess messages */
                 if (recv(i, &c, 1, MSG_DONTWAIT) > 0) {
                     Player *p = control->find_player_by_fd(i);
 
@@ -158,8 +158,8 @@ int main ()
                         control->remove_player(p);
                         break;
 
-		    default:
-			printf("ERROR on decoding message: \"%c\" int: %d\r\n", c, (uint8_t)c);
+                    default:
+                        printf("ERROR on decoding message: \"%c\" int: %d\r\n", c, (uint8_t)c);
                     }
                 }
             }

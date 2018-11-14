@@ -130,7 +130,7 @@ int main()
             player->set_lives(atoi(buffer));
             break;
 
-	case 'S':
+        case 'S':
             read_until_stop(socket_fd, &buffer[0], ' ');
             player->set_score(atoi(buffer));
             break;
@@ -140,18 +140,18 @@ int main()
             player->set_bomb_count(atoi(buffer));
             break;
 
-	case 'D':
-	    /* Play sound */
-	    read_until_stop(socket_fd, &buffer[0], ' ');
-	    sound = buffer;
-	    if (sound.compare(AUDIO_GAMEOVER_MUSIC) == 0) {
-		bg_audio.play(sound);
-		sfx_audio.pause();
-		std::this_thread::sleep_for (std::chrono::milliseconds(4000));
-	    } else {
-		sfx_audio.play(sound);
-	    }
-	    break;
+        case 'D':
+            /* Play sound */
+            read_until_stop(socket_fd, &buffer[0], ' ');
+            sound = buffer;
+            if (sound.compare(AUDIO_GAMEOVER_MUSIC) == 0) {
+                bg_audio.play(sound);
+                sfx_audio.pause();
+                std::this_thread::sleep_for (std::chrono::milliseconds(4000));
+            } else {
+                sfx_audio.play(sound);
+            }
+            break;
 
         case 'Q':
         case 'q':
@@ -165,9 +165,9 @@ int main()
         screen->update();
 
         playercommand = keyboard->getchar();
-	if (playercommand > 0) {
-	    send(socket_fd, &playercommand, 1, 0);
-	}
+        if (playercommand > 0) {
+            send(socket_fd, &playercommand, 1, 0);
+        }
         sleep(0.5);
     }
 

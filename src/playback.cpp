@@ -3,7 +3,7 @@
 using namespace Audio;
 
 int mix_and_play (const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
-		  const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
+                  const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
                   void *userData );
 
 Sample::Sample(std::string filename, float volume)
@@ -80,7 +80,7 @@ void Player::pause()
 Player::~Player()
 {
     for (auto sample : sample_list) {
-	delete sample;
+        delete sample;
     }
 }
 
@@ -101,7 +101,7 @@ Sample * Player::load_sample(std::string sample_name, float volume)
 Sample * Player::load_sample_list(std::vector<std::string> name_list)
 {
     for (auto name: name_list) {
-	load_sample(name);
+        load_sample(name);
     }
 }
 
