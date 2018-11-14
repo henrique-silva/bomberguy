@@ -7,14 +7,6 @@ Controller::Controller(int size_y, int size_x)
 {
     this->game_status = true;
     this->map = new Map(size_y, size_x);
-
-    /* Load all audio samples */
-    this->bg_audio.load_sample(AUDIO_BACKGROUND_MUSIC);
-    this->bg_audio.load_sample(AUDIO_GAMEOVER_MUSIC);
-    this->sfx_audio.load_sample(AUDIO_BOMB_DROP);
-    this->sfx_audio.load_sample(AUDIO_EXPLOSION, 0.5);
-    this->sfx_audio.load_sample(AUDIO_DOOR_DISCOVER);
-    this->sfx_audio.load_sample(AUDIO_POWER_UP);
 }
 
 Player *Controller::find_player_by_fd(int fd)
@@ -25,8 +17,6 @@ Player *Controller::find_player_by_fd(int fd)
 
 void Controller::init_game(int enemy_count)
 {
-    this->bg_audio.play(AUDIO_BACKGROUND_MUSIC);
-
     while (enemy_count-- > 0) {
         this->spawn_enemy(100);
     }
@@ -87,7 +77,6 @@ int Controller::drop_bomb(Player *player, int remaining_time)
     this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_BOMB);
 
     /* Play sound effect */
-    this->sfx_audio.play(AUDIO_BOMB_DROP);
     return 1;
 }
 
@@ -243,7 +232,6 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_BOMB);
                     player->set_max_bombs(player->get_max_bombs() + 1);
                     player->set_score(player->get_score() + 50);
-                    this->sfx_audio.play(AUDIO_POWER_UP);
                 }
 
                 /* Power up */
@@ -251,7 +239,6 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_FLAME);
                     player->set_bomb_range(player->get_bomb_range() + 1);
                     player->set_score(player->get_score() + 50);
-                    this->sfx_audio.play(AUDIO_POWER_UP);
                 }
 
                 /* Power up */
@@ -259,7 +246,6 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_LIFE);
 		    player->set_lives(player->get_lives() + 1);
 		    player->set_score(player->get_score() + 50);
-                    this->sfx_audio.play(AUDIO_POWER_UP);
                 }
             }
 
@@ -286,8 +272,7 @@ void Controller::check_colisions(void)
 
             if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_DOOR)) {
                 if (this->map->door_found == 0) {
-                    this->sfx_audio.play(AUDIO_DOOR_DISCOVER);
-                    this->map->door_found = 1;
+		    this->map->door_found = 1;
                 }
             }
 
@@ -414,7 +399,6 @@ void Controller::explode_bomb(Bomb *bomb)
 
     if (bomb->get_status() == BOMB_ARMED) {
         /* Play sound effect */
-        this->sfx_audio.play(AUDIO_EXPLOSION);
         bomb->set_status(BOMB_EXPLODED);
         bomb->set_remaining_time(EXPLOSION_WEAROFF_TIME);
     } else if (bomb->get_status() == BOMB_EXPLODED){
@@ -461,12 +445,9 @@ void Controller::kill_player(Player *player, int y, int x)
     /* Check if everyone died */
     if (this->player_cnt == 0) {
         this->set_game_status(false);
-        this->sfx_audio.pause();
 	for (std::vector<Spectator *>::iterator spec = this->spec_list.begin(); spec != this->spec_list.end(); spec++) {
 	    (*spec)->update();
 	}
-        this->bg_audio.play(AUDIO_GAMEOVER_MUSIC);
-        std::this_thread::sleep_for (std::chrono::milliseconds(4000));
     }
 }
 
