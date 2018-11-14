@@ -88,8 +88,8 @@ void Controller::add_player(Player *player)
 {
     Position pos = player->get_pos();
 
-    player->set_id(this->player_cnt);
-    this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_PLAYER_BASE+this->player_cnt);
+    player->set_id(this->player_cnt+1);
+    this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_PLAYER_BASE+player->get_id());
     this->player_list.push_back(player);
     this->player_cnt++;
 
@@ -101,6 +101,8 @@ void Controller::remove_player(Player *player)
 {
     Position pos = player->get_pos();
     this->map->clear_flag(std::get<0>(pos), std::get<1>(pos), FLAG_PLAYER_BASE+player->get_id());
+
+    printf("Removing Player %d from game!\n\r", player->get_id());
 
     for (std::vector<Player *>::iterator it = this->player_list.begin(); it != this->player_list.end();) {
         if ((*it) == player) {
@@ -120,6 +122,8 @@ void Controller::remove_player(Player *player)
     }
 
     this->player_cnt--;
+    printf("Remaining players: %d\r\n", this->player_cnt);
+
     if (player_cnt == 0) {
 	printf("All players disconnected. Closing server...\r\n");
 	this->set_game_status(false);
@@ -138,6 +142,7 @@ Position Controller::move_player(Player *player, Direction dir)
     int new_y = old_y + dir_y[dir];
     int new_x = old_x + dir_x[dir];
 
+    printf("Moving player %d from X%d:Y%d to X%d:Y%d\n\r", player->get_id(), old_x, old_y, new_x, new_y);
     /* Check if player is not trying to move into a 'untrespassable' terrain */
     if (this->map->is_walkable(new_y, new_x)) {
         this->map->clear_flag(old_y, old_x, FLAG_PLAYER_BASE+player->get_id());

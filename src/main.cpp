@@ -118,38 +118,48 @@ int main ()
 	    if ( FD_ISSET(i, &read_fd ) && i != server_fd ) {
             /* Ignore new connections, just proccess messages */
                 if (recv(i, &c, 1, MSG_DONTWAIT) > 0) {
-		    printf("Received message from FD %d: %c\r\n", i, c);
                     Player *p = control->find_player_by_fd(i);
+
+                    printf("Received message from player %d: %c\r\n", p->get_id(), c);
 
                     switch (c) {
                     case 'w':
                     case 'W':
+                        printf("Moving UP\r\n");
                         pos = control->move_player(p, UP);
                         break;
 
                     case 'a':
                     case 'A':
+                        printf("Moving LEFT\r\n");
                         pos = control->move_player(p, LEFT);
                         break;
 
                     case 's':
                     case 'S':
+                        printf("Moving DOWN\r\n");
                         pos = control->move_player(p, DOWN);
                         break;
 
                     case 'd':
                     case 'D':
+                        printf("Moving RIGHT\r\n");
                         pos = control->move_player(p, RIGHT);
                         break;
 
                     case ' ':
+                        printf("Drop bomb\r\n");
                         control->drop_bomb(p, 2500);
                         break;
 
                     case 'q':
                     case 'Q':
+                        printf("Quit\r\n");
                         control->remove_player(p);
                         break;
+
+		    default:
+			printf("ERROR on decoding message: \"%c\" int: %d\r\n", c, (uint8_t)c);
                     }
                 }
             }
