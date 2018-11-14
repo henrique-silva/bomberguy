@@ -141,9 +141,6 @@ int main()
             player->set_bomb_count(atoi(buffer));
             break;
 
-	case 'Q':
-	case 'q':
-	    end_flag = 1;
 	case 'D':
 	    /* Play sound */
 	    read_until_stop(socket_fd, &buffer[0], ' ');
