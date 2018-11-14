@@ -36,6 +36,7 @@ public:
     void send_map_info();
     void send_player_info();
     void send_config_data();
+    void send_sound_alert(std::string sound);
     Player* get_player();
 };
 

@@ -13,6 +13,7 @@ SRCS += src/controller.cpp
 SRCS += src/remote_view.cpp
 SRCS += src/main.cpp
 
+CLIENT_SRCS += src/playback.cpp
 CLIENT_SRCS += src/map.cpp
 CLIENT_SRCS += src/player.cpp
 CLIENT_SRCS += src/screen.cpp

@@ -144,7 +144,13 @@ int main()
 	    /* Play sound */
 	    read_until_stop(socket_fd, &buffer[0], ' ');
 	    sound = buffer;
-	    sfx_audio.play(sound);
+	    if (sound.compare(AUDIO_GAMEOVER_MUSIC) == 0) {
+		bg_audio.play(sound);
+		sfx_audio.pause();
+		std::this_thread::sleep_for (std::chrono::milliseconds(4000));
+	    } else {
+		sfx_audio.play(sound);
+	    }
 	    break;
 
         case 'Q':

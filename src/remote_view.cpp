@@ -69,6 +69,17 @@ void Spectator::update()
     this->send_player_info();
 }
 
+void Spectator::send_sound_alert(std::string sound)
+{
+    std::string buffer;
+
+    buffer.append("D");
+    buffer.append(sound);
+
+    buffer.append(" ");
+    send(this->connection_fd, buffer.c_str(), buffer.size(), 0);
+}
+
 Spectator::~Spectator()
 {
     std::string buffer("Q");

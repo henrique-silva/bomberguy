@@ -43,6 +43,7 @@ public:
     void init_game(int enemy_count=4);
 
     Player *find_player_by_fd(int fd);
+    Spectator *find_spec_by_player(Player *player);
 
     void update(double deltaT);
     void check_colisions(void);

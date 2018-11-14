@@ -77,6 +77,10 @@ int Controller::drop_bomb(Player *player, int remaining_time)
     this->map->set_flag(std::get<0>(pos), std::get<1>(pos), FLAG_BOMB);
 
     /* Play sound effect */
+    for (auto spec : this->spec_list) {
+	spec->send_sound_alert(AUDIO_BOMB_DROP);
+    }
+
     return 1;
 }
 
@@ -232,6 +236,8 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_BOMB);
                     player->set_max_bombs(player->get_max_bombs() + 1);
                     player->set_score(player->get_score() + 50);
+		    Spectator *spec = find_spec_by_player(player);
+		    spec->send_sound_alert(AUDIO_POWER_UP);
                 }
 
                 /* Power up */
@@ -239,6 +245,8 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_FLAME);
                     player->set_bomb_range(player->get_bomb_range() + 1);
                     player->set_score(player->get_score() + 50);
+		    Spectator *spec = find_spec_by_player(player);
+		    spec->send_sound_alert(AUDIO_POWER_UP);
                 }
 
                 /* Power up */
@@ -246,6 +254,8 @@ void Controller::check_colisions(void)
                     this->map->clear_flag(y, x, FLAG_PWR_LIFE);
 		    player->set_lives(player->get_lives() + 1);
 		    player->set_score(player->get_score() + 50);
+		    Spectator *spec = find_spec_by_player(player);
+		    spec->send_sound_alert(AUDIO_POWER_UP);
                 }
             }
 
@@ -272,6 +282,10 @@ void Controller::check_colisions(void)
 
             if (this->map->has_flag(y, x, FLAG_FLAME) && this->map->has_flag(y, x, FLAG_DOOR)) {
                 if (this->map->door_found == 0) {
+		    for (auto spec : this->spec_list) {
+			spec->send_sound_alert(AUDIO_DOOR_DISCOVER);
+		    }
+
 		    this->map->door_found = 1;
                 }
             }
@@ -343,6 +357,13 @@ void Controller::update(double deltaT)
     }
 }
 
+Spectator *Controller::find_spec_by_player(Player *player)
+{
+    return *(std::find_if(this->spec_list.begin(), this->spec_list.end(),
+                          [player]( Spectator* const spec) -> bool { return (spec->get_player() == player); }));
+}
+
+
 Bomb *Controller::find_bomb(Position f_pos)
 {
     return *(std::find_if(this->bomb_list.begin(), this->bomb_list.end(),
@@ -399,6 +420,10 @@ void Controller::explode_bomb(Bomb *bomb)
 
     if (bomb->get_status() == BOMB_ARMED) {
         /* Play sound effect */
+	for (auto spec : this->spec_list) {
+	    spec->send_sound_alert(AUDIO_EXPLOSION);
+	}
+
         bomb->set_status(BOMB_EXPLODED);
         bomb->set_remaining_time(EXPLOSION_WEAROFF_TIME);
     } else if (bomb->get_status() == BOMB_EXPLODED){
@@ -439,6 +464,8 @@ void Controller::kill_player(Player *player, int y, int x)
         this->map->set_flag(1, 1, FLAG_PLAYER_BASE+player->get_id());
         player->set_pos(std::make_tuple(1,1));
     } else {
+	Spectator *spec = find_spec_by_player(player);
+	spec->send_sound_alert(AUDIO_GAMEOVER_MUSIC);
         this->remove_player(player);
     }
 
